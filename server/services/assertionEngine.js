@@ -63,7 +63,15 @@ export function evaluateTestAssertions(actual, expected = {}, request = {}) {
     switch (operator) {
       case 'equals':
       case 'eq':
-        assertionPassed = JSON.stringify(targetVal) === JSON.stringify(a.value);
+        if (targetVal === a.value || JSON.stringify(targetVal) === JSON.stringify(a.value)) {
+          assertionPassed = true;
+        } else if (typeof targetVal === 'boolean' && (a.value === 'true' || a.value === 'false')) {
+          assertionPassed = targetVal === (a.value === 'true');
+        } else if (typeof targetVal === 'number' && a.value !== null && a.value !== '' && !isNaN(Number(a.value))) {
+          assertionPassed = targetVal === Number(a.value);
+        } else {
+          assertionPassed = false;
+        }
         detailMessage = assertionPassed
           ? `${targetPath} equals ${JSON.stringify(a.value)}`
           : `Expected ${targetPath} to equal ${JSON.stringify(a.value)}, but got ${JSON.stringify(targetVal)}`;
