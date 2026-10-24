@@ -5,6 +5,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import demoApiRoutes from './routes/demoApi.js';
 import analyzeRoutes from './routes/analyze.js';
+import runnerRoutes from './routes/runner.js';
+import explainRoutes from './routes/explain.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,8 +36,11 @@ app.get('/api/health', (req, res) => {
 // Mount Routes
 app.use('/api/demo', demoApiRoutes);
 app.use('/api/analyze', analyzeRoutes);
+app.use('/api/run-tests', runnerRoutes);
+app.use('/api/explain-failure', explainRoutes);
 
-if (process.env.NODE_ENV !== 'test') {
+const isRunningTests = process.env.NODE_ENV === 'test' || process.argv.some(arg => arg.includes('test'));
+if (!isRunningTests) {
   app.listen(PORT, () => {
     console.log(`🚀 APIForge server running on http://localhost:${PORT}`);
   });
