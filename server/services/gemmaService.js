@@ -135,15 +135,34 @@ Generate a comprehensive, balanced collection of 8 to 12 realistic test cases ac
   ]
 }`;
 
-  try {
-    const response = await client.models.generateContent({
-      model: modelName,
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json',
-        temperature: 0.1
+  async function executeWithRetry() {
+    let lastError;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        return await client.models.generateContent({
+          model: modelName,
+          contents: prompt,
+          config: {
+            responseMimeType: 'application/json',
+            temperature: 0.1
+          }
+        });
+      } catch (err) {
+        lastError = err;
+        const msg = String(err.message || '');
+        if ((msg.includes('ECONNRESET') || msg.includes('fetch failed') || err.code === 'ECONNRESET') && attempt < 3) {
+          console.warn(`⚠️ Transient network issue. Retrying Gemma 4 API (Attempt ${attempt + 1}/3)...`);
+          await new Promise(r => setTimeout(r, attempt * 1000));
+          continue;
+        }
+        throw err;
       }
-    });
+    }
+    throw lastError;
+  }
+
+  try {
+    const response = await executeWithRetry();
 
     const responseText = response.text || (response.candidates && response.candidates[0]?.content?.parts[0]?.text);
     const parsedJson = extractJsonFromText(responseText);
