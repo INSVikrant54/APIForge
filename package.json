@@ -1,0 +1,28 @@
+{
+  "name": "apiforge-monorepo",
+  "version": "1.0.0",
+  "description": "APIForge — AI-Powered API Behavior Verification & Debugging Platform",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -n \"SERVER,CLIENT\" -c \"blue,magenta\" \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
+    "dev:server": "npm --prefix server run dev",
+    "dev:client": "npm --prefix client run dev",
+    "start": "npm --prefix server start",
+    "build": "npm --prefix client run build",
+    "install:all": "npm install && npm --prefix server install && npm --prefix client install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "keywords": [
+    "api-testing",
+    "gemma",
+    "gemini",
+    "ai-testing",
+    "debugging",
+    "regression-testing"
+  ],
+  "author": "APIForge Team",
+  "license": "MIT"
+}
