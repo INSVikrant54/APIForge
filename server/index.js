@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import demoApiRoutes from './routes/demoApi.js';
+import analyzeRoutes from './routes/analyze.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,8 +31,9 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Mount Demo Order API
+// Mount Routes
 app.use('/api/demo', demoApiRoutes);
+app.use('/api/analyze', analyzeRoutes);
 
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
