@@ -25,11 +25,33 @@ export async function setDemoMode(mode) {
   return res.json();
 }
 
-export async function generateTestPlanApi(config) {
-  const res = await fetch('/api/analyze', {
+export async function verifyApiKeyApi({ apiKey, model }) {
+  const res = await fetch('/api/verify-key', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(config)
+    body: JSON.stringify({ apiKey, model })
+  });
+  if (!res.ok) throw new Error(`Verification endpoint failed with HTTP ${res.status}`);
+  return res.json();
+}
+
+export async function generateTestPlanApi(config, aiSettings = null) {
+  const headers = { 'Content-Type': 'application/json' };
+  
+  // Forward custom user API key in secure header if enabled
+  if (aiSettings && !aiSettings.useServerKey && aiSettings.customKey) {
+    headers['x-gemini-api-key'] = aiSettings.customKey.trim();
+  }
+
+  const payload = {
+    ...config,
+    model: aiSettings?.model || null
+  };
+
+  const res = await fetch('/api/analyze', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload)
   });
   const data = await res.json();
   if (!res.ok) {
@@ -51,11 +73,25 @@ export async function runTestsApi({ targetBaseUrl, tests, timeoutMs }) {
   return data;
 }
 
-export async function explainFailureApi({ test, actual, failedAssertion, businessRules }) {
+export async function explainFailureApi({ test, actual, failedAssertion, businessRules }, aiSettings = null) {
+  const headers = { 'Content-Type': 'application/json' };
+
+  if (aiSettings && !aiSettings.useServerKey && aiSettings.customKey) {
+    headers['x-gemini-api-key'] = aiSettings.customKey.trim();
+  }
+
+  const payload = {
+    test,
+    actual,
+    failedAssertion,
+    businessRules,
+    model: aiSettings?.model || null
+  };
+
   const res = await fetch('/api/explain-failure', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ test, actual, failedAssertion, businessRules })
+    headers,
+    body: JSON.stringify(payload)
   });
   const data = await res.json();
   if (!res.ok) {

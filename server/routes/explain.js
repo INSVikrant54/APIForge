@@ -5,7 +5,8 @@ const router = express.Router();
 
 // POST /api/explain-failure - Generates AI failure diagnosis & fix recommendation
 router.post('/', async (req, res) => {
-  const { test, actual, failedAssertion, businessRules } = req.body || {};
+  const { test, actual, failedAssertion, businessRules, model } = req.body || {};
+  const customApiKey = req.headers['x-gemini-api-key'] || null;
 
   if (!test || !actual) {
     return res.status(400).json({ error: 'test and actual response details are required' });
@@ -16,7 +17,9 @@ router.post('/', async (req, res) => {
       test,
       actual,
       failedAssertion,
-      businessRules
+      businessRules,
+      customApiKey,
+      customModel: model
     });
 
     res.json({

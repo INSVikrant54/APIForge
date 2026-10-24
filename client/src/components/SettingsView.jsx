@@ -1,9 +1,10 @@
 import React from 'react';
-import { Settings, Cpu, Shield, Key } from 'lucide-react';
+import { Settings, Cpu, Shield, Key, ExternalLink } from 'lucide-react';
 
-export default function SettingsView({ health, timeoutMs, onChangeTimeout }) {
-  const isAiConfigured = health?.aiConfigured;
-  const model = health?.model || 'gemma-4-26b-a4b-it';
+export default function SettingsView({ health, aiSettings, onOpenAiSettings, timeoutMs, onChangeTimeout }) {
+  const isCustomKey = aiSettings && !aiSettings.useServerKey && aiSettings.customKey;
+  const isServerConfigured = health?.aiConfigured;
+  const activeModel = aiSettings?.model || health?.model || 'gemma-4-26b-a4b-it';
 
   return (
     <div className="card" style={{ maxWidth: '800px', margin: '0 auto' }}>
@@ -15,30 +16,43 @@ export default function SettingsView({ health, timeoutMs, onChangeTimeout }) {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-        {/* Model Config */}
-        <div style={{ background: 'var(--bg-surface)', padding: '1rem', borderRadius: '6px', border: '1px solid var(--border-subtle)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
-            <Cpu size={16} color="#38bdf8" />
-            <h4 style={{ fontSize: '0.9rem', color: '#f8fafc' }}>Gemma 4 Model Configuration</h4>
+        {/* Model Config & BYOK */}
+        <div style={{ background: 'var(--bg-surface)', padding: '1.25rem', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Cpu size={16} color="#38bdf8" />
+              <h4 style={{ fontSize: '0.95rem', color: '#f8fafc', fontWeight: 600 }}>AI Engine & API Key (BYOK)</h4>
+            </div>
+            <button
+              onClick={onOpenAiSettings}
+              className="btn btn-secondary btn-sm"
+              style={{ borderColor: 'var(--accent-cyan)', color: 'var(--accent-cyan)' }}
+            >
+              <Key size={13} />
+              <span>Configure Key & Model</span>
+            </button>
           </div>
-          <div style={{ fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
-            <div>Active Model: <strong style={{ color: '#38bdf8' }}>{model}</strong></div>
-            <div>API Status: <strong style={{ color: isAiConfigured ? 'var(--color-pass)' : 'var(--color-warn)' }}>
-              {isAiConfigured ? 'Connected via GEMINI_API_KEY' : 'Not Configured (Running in Predefined Offline Mode)'}
-            </strong></div>
-            <p style={{ marginTop: '0.4rem', fontSize: '0.75rem', color: '#64748b' }}>
-              Set <code>GEMINI_API_KEY</code> and <code>GEMMA_MODEL</code> in your server <code>.env</code> file to customize.
+
+          <div style={{ fontSize: '0.82rem', color: '#94a3b8', lineHeight: 1.6 }}>
+            <div>Active Model: <strong style={{ color: '#38bdf8' }}>{activeModel}</strong></div>
+            <div>
+              Key Source: <strong style={{ color: isCustomKey ? '#a855f7' : isServerConfigured ? 'var(--color-pass)' : 'var(--color-warn)' }}>
+                {isCustomKey ? 'Custom User Key (Bring Your Own Key)' : isServerConfigured ? 'Default Server Key (.env)' : 'Offline Demo Mode (No Key)'}
+              </strong>
+            </div>
+            <p style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: '#64748b' }}>
+              You can toggle between the default server credentials and your personal Google AI Studio key at any time without restarting the server.
             </p>
           </div>
         </div>
 
         {/* Execution Timeout */}
-        <div style={{ background: 'var(--bg-surface)', padding: '1rem', borderRadius: '6px', border: '1px solid var(--border-subtle)' }}>
+        <div style={{ background: 'var(--bg-surface)', padding: '1.25rem', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
             <Shield size={16} color="#10b981" />
-            <h4 style={{ fontSize: '0.9rem', color: '#f8fafc' }}>Test Runner Execution Safety</h4>
+            <h4 style={{ fontSize: '0.95rem', color: '#f8fafc', fontWeight: 600 }}>Test Runner Execution Safety</h4>
           </div>
-          <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+          <div style={{ fontSize: '0.82rem', color: '#94a3b8' }}>
             <div className="form-group" style={{ maxWidth: '280px', marginTop: '0.5rem' }}>
               <label className="form-label">HTTP Request Timeout (milliseconds)</label>
               <input
@@ -54,7 +68,7 @@ export default function SettingsView({ health, timeoutMs, onChangeTimeout }) {
             <ul style={{ paddingLeft: '1.2rem', fontSize: '0.75rem', color: '#64748b', lineHeight: 1.6 }}>
               <li>SSRF protection active: Private IPs (127.0.0.1, 10.0.0.0/8, 192.168.0.0/16, etc.) are blocked except for internal demo API.</li>
               <li>Cloud metadata endpoints (169.254.169.254) strictly forbidden.</li>
-              <li>Sensitive headers (Authorization, Cookie, x-api-key) automatically redacted in logs and exported tests.</li>
+              <li>Sensitive headers (Authorization, Cookie, x-api-key, x-gemini-api-key) automatically redacted in logs and exported tests.</li>
             </ul>
           </div>
         </div>

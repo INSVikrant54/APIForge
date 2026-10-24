@@ -5,6 +5,7 @@ import ConfigPanel from './components/ConfigPanel.jsx';
 import TestSuitePanel from './components/TestSuitePanel.jsx';
 import FailureDetailModal from './components/FailureDetailModal.jsx';
 import RegressionExportModal from './components/RegressionExportModal.jsx';
+import ApiKeyModal from './components/ApiKeyModal.jsx';
 import RecentRunsView from './components/RecentRunsView.jsx';
 import DocsView from './components/DocsView.jsx';
 import SettingsView from './components/SettingsView.jsx';
@@ -19,12 +20,24 @@ import {
 } from './services/api.js';
 
 const STORAGE_KEY_RECENT_RUNS = 'apiforge_recent_runs_v1';
+const STORAGE_KEY_AI_SETTINGS = 'apiforge_ai_settings_v1';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState('lab'); // 'lab' | 'history' | 'docs' | 'settings'
   const [health, setHealth] = useState(null);
   const [demoMode, setDemoModeState] = useState({ mode: 'vulnerable' });
   const [timeoutMs, setTimeoutMs] = useState(6000);
+
+  // AI Key & Model Settings (BYOK support)
+  const [aiSettings, setAiSettings] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_AI_SETTINGS);
+      return saved ? JSON.parse(saved) : { useServerKey: true, customKey: '', model: 'gemma-4-26b-a4b-it' };
+    } catch {
+      return { useServerKey: true, customKey: '', model: 'gemma-4-26b-a4b-it' };
+    }
+  });
+  const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
 
   // Configuration state initialized from first preset (Demo Order API)
   const [config, setConfig] = useState({
@@ -72,6 +85,15 @@ export default function App() {
     }
   }, []);
 
+  const handleSaveAiSettings = (newSettings) => {
+    setAiSettings(newSettings);
+    try {
+      localStorage.setItem(STORAGE_KEY_AI_SETTINGS, JSON.stringify(newSettings));
+    } catch {
+      // Ignore storage errors
+    }
+  };
+
   // Save run to local history
   const recordRunToHistory = (suite, runSummary, runResults) => {
     const newRun = {
@@ -109,11 +131,14 @@ export default function App() {
     setResults(null);
     setSummary(null);
 
+    const isCustomActive = !aiSettings.useServerKey && aiSettings.customKey;
+    const shouldFallbackOffline = !isCustomActive && !health?.aiConfigured;
+
     try {
       const plan = await generateTestPlanApi({
         ...config,
-        useOfflineDemo: !health?.aiConfigured
-      });
+        useOfflineDemo: shouldFallbackOffline
+      }, aiSettings);
       setTestSuite(plan);
       setCurrentTab('lab');
     } catch (err) {
@@ -141,11 +166,14 @@ export default function App() {
     setResults(null);
     setSummary(null);
 
+    const isCustomActive = !aiSettings.useServerKey && aiSettings.customKey;
+    const shouldFallbackOffline = !isCustomActive && !health?.aiConfigured;
+
     try {
       const plan = await generateTestPlanApi({
         ...demoPreset,
-        useOfflineDemo: !health?.aiConfigured
-      });
+        useOfflineDemo: shouldFallbackOffline
+      }, aiSettings);
       setTestSuite(plan);
       setCurrentTab('lab');
     } catch (err) {
@@ -242,7 +270,7 @@ export default function App() {
         actual: result.actual,
         failedAssertion: result.failureReason,
         businessRules: config.businessRules
-      });
+      }, aiSettings);
       setFailureExplanation(explanation);
     } catch (err) {
       alert(`Could not generate AI failure explanation: ${err.message}`);
@@ -282,6 +310,8 @@ export default function App() {
         <Header
           health={health}
           demoMode={demoMode}
+          aiSettings={aiSettings}
+          onOpenAiSettings={() => setApiKeyModalOpen(true)}
           onToggleDemoMode={handleToggleDemoMode}
           onLoadDemo={handleLoadDemo}
           loading={loadingPlan || runningTests}
@@ -342,6 +372,8 @@ export default function App() {
             <div style={{ flex: 1 }}>
               <SettingsView
                 health={health}
+                aiSettings={aiSettings}
+                onOpenAiSettings={() => setApiKeyModalOpen(true)}
                 timeoutMs={timeoutMs}
                 onChangeTimeout={setTimeoutMs}
               />
@@ -349,6 +381,15 @@ export default function App() {
           )}
         </main>
       </div>
+
+      {/* API Key & Model Settings Modal (BYOK) */}
+      <ApiKeyModal
+        isOpen={apiKeyModalOpen}
+        onClose={() => setApiKeyModalOpen(false)}
+        health={health}
+        aiSettings={aiSettings}
+        onSaveSettings={handleSaveAiSettings}
+      />
 
       {/* Failure Breakdown & AI Remediation Modal */}
       {inspectingFailure && (

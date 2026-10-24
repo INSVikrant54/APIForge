@@ -7,6 +7,7 @@ import demoApiRoutes from './routes/demoApi.js';
 import analyzeRoutes from './routes/analyze.js';
 import runnerRoutes from './routes/runner.js';
 import explainRoutes from './routes/explain.js';
+import { verifyApiKey } from './services/gemmaService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,6 +32,14 @@ app.get('/api/health', (req, res) => {
     model: process.env.GEMMA_MODEL || 'gemma-4-26b-a4b-it',
     timestamp: new Date().toISOString()
   });
+});
+
+
+// Verify API Key on demand
+app.post('/api/verify-key', async (req, res) => {
+  const { apiKey, model } = req.body || {};
+  const result = await verifyApiKey(apiKey, model);
+  res.json(result);
 });
 
 // Mount Routes

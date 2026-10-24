@@ -3,10 +3,13 @@ import { validateAndNormalizeTestPlan } from '../utils/schemaValidator.js';
 import { getOfflineDemoPlan } from './offlineDemoPlan.js';
 
 /**
- * Returns an instance of GoogleGenAI using environment credentials
+ * Returns an instance of GoogleGenAI prioritizing custom key over server env
  */
-function getGenAIClient() {
-  const apiKey = process.env.GEMINI_API_KEY;
+function getGenAIClient(customApiKey = null) {
+  const apiKey = (customApiKey && typeof customApiKey === 'string' && customApiKey.trim() !== '')
+    ? customApiKey.trim()
+    : process.env.GEMINI_API_KEY;
+
   if (!apiKey || apiKey.trim() === '' || apiKey === 'your_gemini_api_key_here') {
     return null;
   }
@@ -38,6 +41,35 @@ function extractJsonFromText(text) {
 }
 
 /**
+ * Verifies if an API key is valid by calling a lightweight test
+ */
+export async function verifyApiKey(apiKey, testModel = null) {
+  if (!apiKey || typeof apiKey !== 'string' || apiKey.trim() === '') {
+    return { valid: false, error: 'API key is required' };
+  }
+
+  const client = new GoogleGenAI({ apiKey: apiKey.trim() });
+  const model = testModel || process.env.GEMMA_MODEL || 'gemma-4-26b-a4b-it';
+
+  try {
+    const res = await client.models.generateContent({
+      model,
+      contents: 'Respond with valid JSON: {"status":"verified"}'
+    });
+    return {
+      valid: true,
+      model,
+      message: 'API Key connection verified successfully'
+    };
+  } catch (err) {
+    return {
+      valid: false,
+      error: err.message || 'Failed to verify API key with Google Gen AI'
+    };
+  }
+}
+
+/**
  * Generates an adversarial test plan using Gemma 4 via Gemini API
  * @param {Object} apiConfig 
  * @returns {Promise<Object>}
@@ -51,11 +83,13 @@ export async function generateTestPlan(apiConfig) {
     expectedStatus = 200,
     sampleResponse = null,
     businessRules = '',
-    useOfflineDemo = false
+    useOfflineDemo = false,
+    customApiKey = null,
+    customModel = null
   } = apiConfig;
 
-  const client = getGenAIClient();
-  const modelName = process.env.GEMMA_MODEL || 'gemma-4-26b-a4b-it';
+  const client = getGenAIClient(customApiKey);
+  const modelName = customModel || process.env.GEMMA_MODEL || 'gemma-4-26b-a4b-it';
 
   // If client is missing or user explicitly requested offline demo for the demo route:
   if (!client || useOfflineDemo) {
@@ -64,7 +98,7 @@ export async function generateTestPlan(apiConfig) {
       return getOfflineDemoPlan();
     }
     throw new Error(
-      'GEMINI_API_KEY is not configured on the server. Please set GEMINI_API_KEY in your .env file, or use "Try Interactive Demo" for offline mode.'
+      'No Gemini API key available. Configure your key in Settings or choose "Try Interactive Demo" for offline mode.'
     );
   }
 
@@ -198,9 +232,9 @@ Generate a comprehensive, balanced collection of 8 to 12 realistic test cases ac
  * @returns {Promise<Object>}
  */
 export async function explainFailure(details) {
-  const { test, actual, businessRules } = details;
-  const client = getGenAIClient();
-  const modelName = process.env.GEMMA_MODEL || 'gemma-4-26b-a4b-it';
+  const { test, actual, businessRules, customApiKey, customModel } = details;
+  const client = getGenAIClient(customApiKey);
+  const modelName = customModel || process.env.GEMMA_MODEL || 'gemma-4-26b-a4b-it';
 
   // Deterministic local explanation if client is not configured
   if (!client) {

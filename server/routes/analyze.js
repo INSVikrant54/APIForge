@@ -13,8 +13,11 @@ router.post('/', async (req, res) => {
     expectedStatus = 200,
     sampleResponse = null,
     businessRules = '',
-    useOfflineDemo = false
+    useOfflineDemo = false,
+    model = null
   } = req.body || {};
+
+  const customApiKey = req.headers['x-gemini-api-key'] || null;
 
   // Validate method
   const validMethods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
@@ -36,7 +39,9 @@ router.post('/', async (req, res) => {
       expectedStatus: Number(expectedStatus) || 200,
       sampleResponse,
       businessRules: typeof businessRules === 'string' ? businessRules.trim() : '',
-      useOfflineDemo: Boolean(useOfflineDemo)
+      useOfflineDemo: Boolean(useOfflineDemo),
+      customApiKey,
+      customModel: model
     });
 
     res.json({
