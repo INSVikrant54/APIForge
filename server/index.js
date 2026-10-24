@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import demoApiRoutes from './routes/demoApi.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,6 +29,9 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+// Mount Demo Order API
+app.use('/api/demo', demoApiRoutes);
 
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
