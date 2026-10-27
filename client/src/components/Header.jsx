@@ -36,14 +36,25 @@ export default function Header({
   return (
     <header className="top-header">
       {/* Left: View title */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
         <h2 style={{ fontSize: '1rem', fontWeight: 600, color: '#f8fafc' }}>
           API Behavior Verification Lab
         </h2>
-        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>•</span>
-        <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-          Deterministic execution powered by Gemma 4
-        </span>
+        <div style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.35rem',
+          background: 'rgba(245, 158, 11, 0.12)',
+          border: '1px solid rgba(245, 158, 11, 0.3)',
+          borderRadius: '9999px',
+          padding: '0.18rem 0.55rem',
+          fontSize: '0.72rem',
+          color: '#fbbf24',
+          fontWeight: 600
+        }}>
+          <span>🏆</span>
+          <span>Hacktoberfest Track Winner — Best Use of Gemma 4</span>
+        </div>
       </div>
 
       {/* Right: Status Badges & Demo Mode Toggle */}

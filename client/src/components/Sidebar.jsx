@@ -98,15 +98,33 @@ export default function Sidebar({ currentTab, onSelectTab, recentRunsCount = 0 }
         color: '#64748b',
         display: 'flex',
         flexDirection: 'column',
-        gap: '0.4rem'
+        gap: '0.6rem'
       }}>
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(234, 88, 12, 0.08))',
+          border: '1px solid rgba(245, 158, 11, 0.3)',
+          borderRadius: '8px',
+          padding: '0.55rem 0.65rem',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.2rem'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#fbbf24', fontWeight: 600, fontSize: '0.74rem' }}>
+            <span>🏆</span>
+            <span>Hacktoberfest Track Winner</span>
+          </div>
+          <div style={{ fontSize: '0.7rem', color: '#e2e8f0', fontWeight: 500 }}>
+            Best Use of Gemma 4
+          </div>
+        </div>
+
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span>AI Engine</span>
           <span style={{ color: '#38bdf8', fontWeight: 600 }}>Gemma 4</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span>Version</span>
-          <span style={{ color: '#94a3b8' }}>v1.0.0 (Hackathon)</span>
+          <span style={{ color: '#94a3b8' }}>v1.0.0</span>
         </div>
       </div>
     </aside>

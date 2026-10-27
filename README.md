@@ -1,5 +1,6 @@
 # APIForge ⚡
-> **Automated Edge-Case Verification & Regression Testing for Modern APIs**
+> **Automated Edge-Case Verification & Regression Testing for Modern APIs**  
+> 🏆 **Hacktoberfest Track Winner — Best Use of Gemma 4**
 
 APIForge is a developer platform that automatically discovers hidden API defects by combining **Gemma 4** (`gemma-4-26b-a4b-it`) AI reasoning with a **deterministic backend execution engine**. 
 

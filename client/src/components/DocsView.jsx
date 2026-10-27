@@ -12,6 +12,21 @@ export default function DocsView() {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', fontSize: '0.85rem', color: '#cbd5e1' }}>
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(234, 88, 12, 0.08))',
+          border: '1px solid rgba(245, 158, 11, 0.3)',
+          borderRadius: '8px',
+          padding: '0.65rem 0.9rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.45rem',
+          color: '#fbbf24',
+          fontWeight: 600,
+          fontSize: '0.85rem'
+        }}>
+          <span>🏆</span>
+          <span>Hacktoberfest Track Winner — Best Use of Gemma 4</span>
+        </div>
         <div>
           <h4 style={{ color: '#f8fafc', fontSize: '0.95rem', marginBottom: '0.3rem' }}>
             Why Deterministic Verification?
