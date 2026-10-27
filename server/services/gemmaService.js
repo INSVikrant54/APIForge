@@ -44,12 +44,22 @@ function extractJsonFromText(text) {
  * Verifies if an API key is valid by calling a lightweight test
  */
 export async function verifyApiKey(apiKey, testModel = null) {
-  if (!apiKey || typeof apiKey !== 'string' || apiKey.trim() === '') {
-    return { valid: false, error: 'API key is required' };
+  const isServerKey = !apiKey || apiKey === 'use-server' || (typeof apiKey === 'string' && apiKey.trim() === '');
+  const effectiveKey = isServerKey
+    ? process.env.GEMINI_API_KEY
+    : (typeof apiKey === 'string' ? apiKey.trim() : null);
+
+  if (!effectiveKey || effectiveKey.trim() === '' || effectiveKey === 'your_gemini_api_key_here') {
+    return {
+      valid: false,
+      error: isServerKey
+        ? 'Server GEMINI_API_KEY is not configured in environment variables. Please add GEMINI_API_KEY in Render Dashboard → Environment, or switch to "Custom Gemini API Key".'
+        : 'API key is required'
+    };
   }
 
-  const client = new GoogleGenAI({ apiKey: apiKey.trim() });
-  const model = testModel || process.env.GEMMA_MODEL || 'gemma-4-26b-a4b-it';
+  const client = new GoogleGenAI({ apiKey: effectiveKey.trim() });
+  const model = testModel || process.env.GEMMA_MODEL || 'gemini-3.5-flash-lite';
 
   try {
     const res = await client.models.generateContent({
@@ -62,9 +72,16 @@ export async function verifyApiKey(apiKey, testModel = null) {
       message: 'API Key connection verified successfully'
     };
   } catch (err) {
+    let msg = err.message || 'Failed to verify API key with Google Gen AI';
+    try {
+      const parsed = JSON.parse(msg);
+      if (parsed.error?.message) {
+        msg = parsed.error.message;
+      }
+    } catch (_) {}
     return {
       valid: false,
-      error: err.message || 'Failed to verify API key with Google Gen AI'
+      error: msg
     };
   }
 }
