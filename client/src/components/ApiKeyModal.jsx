@@ -3,8 +3,8 @@ import { X, Key, Eye, EyeOff, Check, AlertCircle, Cpu, ExternalLink, ShieldCheck
 import { verifyApiKeyApi } from '../services/api.js';
 
 const AVAILABLE_MODELS = [
-  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash — Fastest Response' },
-  { id: 'gemini-3.8-flash', name: 'Gemini 3.8 Flash — High-Speed General Model' },
+  { id: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash Lite — Fastest Response' },
+  { id: 'gemini-3.5-flash', name: 'Gemini 3.5 Flash — High-Speed General Model' },
   { id: 'gemma-4-26b-a4b-it', name: 'Gemma 4 (26B-A4B-IT) — Takes Longer, Best Response Quality' },
   { id: 'gemma-4-31b-it', name: 'Gemma 4 (31B-IT) — Largest Reasoning Model (Slowest)' },
   { id: 'custom', name: 'Custom Model ID...' }
