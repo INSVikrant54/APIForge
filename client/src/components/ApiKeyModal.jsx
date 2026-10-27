@@ -6,6 +6,7 @@ const AVAILABLE_MODELS = [
   { id: 'gemma-4-26b-a4b-it', name: 'Gemma 4 (26B-A4B-IT) — Default Recommended' },
   { id: 'gemma-4-31b-it', name: 'Gemma 4 (31B-IT) — Larger Reasoning Model' },
   { id: 'gemini-3.8-flash', name: 'Gemini 3.8 Flash — High-Speed General Model' },
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash — Fastest Response Model' },
   { id: 'custom', name: 'Custom Model ID...' }
 ];
 
@@ -288,7 +289,7 @@ export default function ApiKeyModal({
                 type="text"
                 className="form-input"
                 style={{ marginTop: '0.5rem', fontFamily: 'var(--font-mono)', fontSize: '0.82rem' }}
-                placeholder="e.g. gemma-4-26b-a4b-it or gemini-3.8-flash"
+                placeholder="e.g. gemma-4-26b-a4b-it, gemini-3.8-flash or gemini-2.5-flash"
                 value={customModelId}
                 onChange={(e) => setCustomModelId(e.target.value)}
               />

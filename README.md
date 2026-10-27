@@ -13,7 +13,7 @@ Developers provide an API endpoint, a sample payload, and business rules written
 - **Deterministic Verification Engine:** Never relies on LLMs to hallucinate pass/fail results. Real HTTP requests are executed against the target server, and responses are verified by a strict assertion engine.
 - **Human-in-the-Loop Developer Control:** Inspect, edit, and fine-tune request payloads, headers, and expected assertions before firing a single request.
 - **Contract Ambiguity Detection:** Flags under-specified contract behaviors with a `Requires Review` badge before execution.
-- **Bring Your Own Key (BYOK) & Multi-Model Support:** Configure your own Gemini API key or switch between `gemma-4-26b-a4b-it`, `gemma-4-31b-it`, `gemini-3.8-flash`, or custom models directly in the UI.
+- **Bring Your Own Key (BYOK) & Multi-Model Support:** Configure your own Gemini API key or switch between `gemma-4-26b-a4b-it`, `gemma-4-31b-it`, `gemini-3.8-flash`, `gemini-2.5-flash`, or custom models directly in the UI.
 - **AI Failure Diagnostics & cURL Export:** One-click root-cause analysis, actionable code remediation patches, and sanitized reproduction cURLs.
 - **One-Click CI/CD Regression Export:** Export discovered edge cases into production-ready **Jest (Supertest)** and **Pytest** test suites.
 - **Built-in Training & Verification Sandbox:** Interactive mock Order API with toggleable **Safe Mode** and **Vulnerable Mode** for rapid evaluation and testing.
@@ -84,7 +84,8 @@ APIForge includes native **BYOK (Bring Your Own Key)** support directly within t
 - **Model Switching:** Easily switch between supported models without restarting containers:
   - `gemma-4-26b-a4b-it` (Default high-precision reasoning)
   - `gemma-4-31b-it` (Larger reasoning model)
-  - `gemini-3.8-flash` (High-speed model)
+  - `gemini-3.8-flash` (High-speed general model)
+  - `gemini-2.5-flash` (Fastest response model — low latency)
   - Custom model ID (for fine-tuned or internal Gemini endpoints)
 - **Live Connection Diagnostics:** Test key validity and model access instantly with the built-in **Test Connection** button (`POST /api/verify-key`).
 - **In-Memory Security:** User-supplied keys are maintained strictly in client memory and transmitted via runtime HTTP headers (`x-gemini-api-key`). Custom keys are never written to disk, databases, or log files.
