@@ -48,6 +48,15 @@ app.use('/api/analyze', analyzeRoutes);
 app.use('/api/run-tests', runnerRoutes);
 app.use('/api/explain-failure', explainRoutes);
 
+// Serve React frontend in production
+if (process.env.NODE_ENV === 'production') {
+  const clientDist = path.resolve(__dirname, '../client/dist');
+  app.use(express.static(clientDist));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(clientDist, 'index.html'));
+  });
+}
+
 const isRunningTests = process.env.NODE_ENV === 'test' || process.argv.some(arg => arg.includes('test'));
 if (!isRunningTests) {
   app.listen(PORT, () => {
