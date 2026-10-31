@@ -1,13 +1,24 @@
 import React from 'react';
-import { FlaskConical, History, BookOpen, Settings, Zap, Github } from 'lucide-react';
+import { FlaskConical, History, BookOpen, Settings, Zap } from 'lucide-react';
 
-export default function Sidebar({ currentTab, onSelectTab, recentRunsCount = 0 }) {
+export default function Sidebar({
+  currentTab,
+  onSelectTab,
+  recentRunsCount = 0,
+  activeModel = 'gemma-4-26b-a4b-it'
+}) {
   const navItems = [
     { id: 'lab', label: 'Test Lab', icon: FlaskConical },
     { id: 'history', label: 'Recent Runs', icon: History, badge: recentRunsCount > 0 ? recentRunsCount : null },
     { id: 'docs', label: 'Documentation', icon: BookOpen },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
+
+  const engineName = activeModel.startsWith('gemma')
+    ? 'Gemma 4'
+    : activeModel.startsWith('gemini')
+      ? 'Gemini 3.5'
+      : 'BYOK Custom';
 
   return (
     <aside className="sidebar">
@@ -22,45 +33,50 @@ export default function Sidebar({ currentTab, onSelectTab, recentRunsCount = 0 }
         <div style={{
           width: '34px',
           height: '34px',
-          borderRadius: '8px',
+          borderRadius: 'var(--radius-sm)',
           background: 'var(--accent-gradient)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 2px 8px rgba(56, 189, 248, 0.3)'
+          boxShadow: '0 2px 8px rgba(56, 189, 248, 0.25)'
         }}>
           <Zap size={20} color="#fff" />
         </div>
         <div>
-          <h1 style={{ fontSize: '1.05rem', fontWeight: 800, letterSpacing: '-0.02em', color: '#fff' }}>
-            API<span style={{ color: '#38bdf8' }}>Forge</span>
+          <h1 style={{ fontSize: '1.05rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text-main)' }}>
+            API<span style={{ color: 'var(--accent-cyan)' }}>Forge</span>
           </h1>
-          <p style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '-2px' }}>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '-2px' }}>
             Behavior Verification
           </p>
         </div>
       </div>
 
       {/* Navigation Links */}
-      <nav style={{ padding: '1rem 0.75rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+      <nav
+        aria-label="Sidebar Navigation"
+        style={{ padding: '1rem 0.75rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '0.35rem' }}
+      >
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentTab === item.id;
           return (
             <button
               key={item.id}
+              type="button"
               onClick={() => onSelectTab(item.id)}
+              aria-current={isActive ? 'page' : undefined}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 width: '100%',
                 padding: '0.6rem 0.75rem',
-                borderRadius: '8px',
+                borderRadius: 'var(--radius-sm)',
                 border: '1px solid',
                 borderColor: isActive ? 'var(--border-active)' : 'transparent',
                 background: isActive ? 'var(--bg-card)' : 'transparent',
-                color: isActive ? '#38bdf8' : '#94a3b8',
+                color: isActive ? 'var(--accent-cyan)' : 'var(--text-muted)',
                 cursor: 'pointer',
                 fontFamily: 'inherit',
                 fontSize: '0.85rem',
@@ -70,16 +86,16 @@ export default function Sidebar({ currentTab, onSelectTab, recentRunsCount = 0 }
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                <Icon size={16} color={isActive ? '#38bdf8' : '#64748b'} />
+                <Icon size={16} color={isActive ? 'var(--accent-cyan)' : 'var(--text-dim)'} />
                 <span>{item.label}</span>
               </div>
               {item.badge && (
                 <span style={{
                   background: 'rgba(56, 189, 248, 0.15)',
-                  color: '#38bdf8',
-                  padding: '0.1rem 0.45rem',
+                  color: 'var(--accent-cyan)',
+                  padding: '0.1rem 0.5rem',
                   borderRadius: '999px',
-                  fontSize: '0.7rem',
+                  fontSize: '0.75rem',
                   fontWeight: 600
                 }}>
                   {item.badge}
@@ -94,8 +110,8 @@ export default function Sidebar({ currentTab, onSelectTab, recentRunsCount = 0 }
       <div style={{
         padding: '1rem',
         borderTop: '1px solid var(--border-subtle)',
-        fontSize: '0.72rem',
-        color: '#64748b',
+        fontSize: '0.75rem',
+        color: 'var(--text-muted)',
         display: 'flex',
         flexDirection: 'column',
         gap: '0.6rem'
@@ -103,28 +119,28 @@ export default function Sidebar({ currentTab, onSelectTab, recentRunsCount = 0 }
         <div style={{
           background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(234, 88, 12, 0.08))',
           border: '1px solid rgba(245, 158, 11, 0.3)',
-          borderRadius: '8px',
+          borderRadius: 'var(--radius-sm)',
           padding: '0.55rem 0.65rem',
           display: 'flex',
           flexDirection: 'column',
           gap: '0.2rem'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#fbbf24', fontWeight: 600, fontSize: '0.74rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--color-warn)', fontWeight: 600, fontSize: '0.75rem' }}>
             <span>🏆</span>
             <span>Hacktoberfest Track Winner</span>
           </div>
-          <div style={{ fontSize: '0.7rem', color: '#e2e8f0', fontWeight: 500 }}>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-main)', fontWeight: 500 }}>
             Best Use of Gemma 4
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span>AI Engine</span>
-          <span style={{ color: '#38bdf8', fontWeight: 600 }}>Gemma 4</span>
+          <span style={{ color: 'var(--accent-cyan)', fontWeight: 600 }}>{engineName}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span>Version</span>
-          <span style={{ color: '#94a3b8' }}>v1.0.0</span>
+          <span style={{ color: 'var(--text-muted)' }}>v1.0.0</span>
         </div>
       </div>
     </aside>

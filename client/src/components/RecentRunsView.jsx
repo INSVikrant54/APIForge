@@ -4,12 +4,12 @@ import { History, Play, Trash2, CheckCircle2, XCircle } from 'lucide-react';
 export default function RecentRunsView({ runs = [], onLoadRun, onClearRuns }) {
   if (runs.length === 0) {
     return (
-      <div className="card" style={{ textAlign: 'center', padding: '3.5rem 1.5rem', color: '#94a3b8' }}>
-        <History size={40} color="#334155" style={{ margin: '0 auto 1rem' }} />
-        <h3 style={{ fontSize: '1.05rem', color: '#f1f5f9', marginBottom: '0.4rem' }}>
+      <div className="card" style={{ textAlign: 'center', padding: '3.5rem 1.5rem', color: 'var(--text-muted)' }}>
+        <History size={40} color="var(--border-active)" style={{ margin: '0 auto 1rem' }} />
+        <h3 style={{ fontSize: '1.05rem', color: 'var(--text-main)', marginBottom: '0.4rem' }}>
           No Test Runs in History
         </h3>
-        <p style={{ fontSize: '0.85rem', maxWidth: '420px', margin: '0 auto', color: '#64748b' }}>
+        <p style={{ fontSize: '0.85rem', maxWidth: '420px', margin: '0 auto', color: 'var(--text-dim)' }}>
           Execute test suites in the Test Lab to record runs locally in your session history.
         </p>
       </div>
@@ -20,10 +20,16 @@ export default function RecentRunsView({ runs = [], onLoadRun, onClearRuns }) {
     <div className="card">
       <div className="card-header">
         <div className="card-title">
-          <History size={18} color="#38bdf8" />
+          <History size={18} color="var(--accent-cyan)" />
           <span>Session Test History ({runs.length})</span>
         </div>
-        <button onClick={onClearRuns} className="btn btn-secondary btn-sm" style={{ color: 'var(--color-fail)' }}>
+        <button
+          type="button"
+          onClick={onClearRuns}
+          aria-label="Clear all session history runs"
+          className="btn btn-secondary btn-sm"
+          style={{ color: 'var(--color-fail)' }}
+        >
           <Trash2 size={13} />
           <span>Clear History</span>
         </button>
@@ -36,18 +42,20 @@ export default function RecentRunsView({ runs = [], onLoadRun, onClearRuns }) {
             style={{
               background: 'var(--bg-surface)',
               border: '1px solid var(--border-subtle)',
-              borderRadius: '6px',
+              borderRadius: 'var(--radius-sm)',
               padding: '0.85rem 1rem',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between'
+              justifyContent: 'space-between',
+              gap: '1rem',
+              flexWrap: 'wrap'
             }}
           >
             <div>
-              <div style={{ fontWeight: 600, fontSize: '0.88rem', color: '#f8fafc' }}>
+              <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text-main)' }}>
                 {run.suiteName}
               </div>
-              <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.2rem' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.2rem' }}>
                 Target: {run.path} • {new Date(run.timestamp).toLocaleTimeString()}
               </div>
             </div>
@@ -63,7 +71,9 @@ export default function RecentRunsView({ runs = [], onLoadRun, onClearRuns }) {
               </div>
 
               <button
+                type="button"
                 onClick={() => onLoadRun(run)}
+                aria-label={`Inspect results of ${run.suiteName}`}
                 className="btn btn-secondary btn-sm"
               >
                 <span>Inspect Run</span>

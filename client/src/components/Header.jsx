@@ -15,20 +15,26 @@ export default function Header({
   const isServerConfigured = health?.aiConfigured;
   const activeModel = aiSettings?.model || health?.model || 'gemma-4-26b-a4b-it';
 
-  // Determine badge text and styling
-  let badgeLabel = `Gemma 4 (${activeModel})`;
-  let badgeColor = '#38bdf8';
+  // Determine badge text and styling dynamically based on model family
+  const modelFamily = activeModel.startsWith('gemma')
+    ? 'Gemma 4'
+    : activeModel.startsWith('gemini')
+      ? 'Gemini'
+      : 'Model';
+
+  let badgeLabel = `${modelFamily} • ${activeModel}`;
+  let badgeColor = 'var(--accent-cyan)';
   let badgeBg = 'rgba(56, 189, 248, 0.1)';
   let badgeBorder = 'rgba(56, 189, 248, 0.3)';
 
   if (isCustomKeyActive) {
-    badgeLabel = `Custom Key • ${activeModel}`;
-    badgeColor = '#a855f7';
+    badgeLabel = `BYOK Key • ${activeModel}`;
+    badgeColor = '#c084fc';
     badgeBg = 'rgba(168, 85, 247, 0.12)';
     badgeBorder = 'rgba(168, 85, 247, 0.35)';
   } else if (!isServerConfigured) {
     badgeLabel = 'Offline Demo Mode (No Key)';
-    badgeColor = '#f59e0b';
+    badgeColor = 'var(--color-warn)';
     badgeBg = 'rgba(245, 158, 11, 0.1)';
     badgeBorder = 'rgba(245, 158, 11, 0.3)';
   }
@@ -37,7 +43,7 @@ export default function Header({
     <header className="top-header">
       {/* Left: View title */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-        <h2 style={{ fontSize: '1rem', fontWeight: 600, color: '#f8fafc' }}>
+        <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-main)' }}>
           API Behavior Verification Lab
         </h2>
         <div style={{
@@ -47,9 +53,9 @@ export default function Header({
           background: 'rgba(245, 158, 11, 0.12)',
           border: '1px solid rgba(245, 158, 11, 0.3)',
           borderRadius: '9999px',
-          padding: '0.18rem 0.55rem',
-          fontSize: '0.72rem',
-          color: '#fbbf24',
+          padding: '0.2rem 0.6rem',
+          fontSize: '0.75rem',
+          color: 'var(--color-warn)',
           fontWeight: 600
         }}>
           <span>🏆</span>
@@ -58,11 +64,13 @@ export default function Header({
       </div>
 
       {/* Right: Status Badges & Demo Mode Toggle */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
         {/* Clickable Model & Key Settings Pill */}
         <button
           onClick={onOpenAiSettings}
           type="button"
+          aria-haspopup="dialog"
+          aria-label={`Configure AI Model and API Key. Currently active: ${badgeLabel}`}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -84,7 +92,7 @@ export default function Header({
           />
           {isCustomKeyActive ? <Key size={13} /> : <Cpu size={13} />}
           <span style={{ fontWeight: 500 }}>{badgeLabel}</span>
-          <Settings2 size={12} style={{ opacity: 0.6, marginLeft: '2px' }} />
+          <Settings2 size={12} style={{ opacity: 0.7, marginLeft: '2px' }} />
         </button>
 
         {/* Demo Mode Toggle Controller */}
@@ -92,22 +100,27 @@ export default function Header({
           display: 'flex',
           alignItems: 'center',
           gap: '0.5rem',
-          background: '#0e1626',
-          border: '1px solid #1e293b',
-          borderRadius: '8px',
+          background: 'var(--bg-surface)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: 'var(--radius-sm)',
           padding: '0.2rem 0.35rem'
         }}>
-          <span style={{ fontSize: '0.75rem', color: '#94a3b8', paddingLeft: '0.3rem' }}>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', paddingLeft: '0.3rem' }}>
             Demo Target:
           </span>
           <button
+            type="button"
+            role="switch"
+            aria-checked={isVulnerable}
+            aria-label="Toggle between vulnerable and safe demo targets"
             onClick={() => onToggleDemoMode(isVulnerable ? 'safe' : 'vulnerable')}
             className="btn btn-sm"
             style={{
-              background: isVulnerable ? 'rgba(244, 63, 94, 0.2)' : 'rgba(16, 185, 129, 0.2)',
-              border: `1px solid ${isVulnerable ? '#f43f5e' : '#10b981'}`,
-              color: isVulnerable ? '#f43f5e' : '#10b981',
-              fontWeight: 600
+              background: isVulnerable ? 'var(--bg-fail)' : 'var(--bg-pass)',
+              border: isVulnerable ? '1px solid var(--border-fail)' : '1px solid var(--border-pass)',
+              color: isVulnerable ? 'var(--color-fail)' : 'var(--color-pass)',
+              fontWeight: 600,
+              fontSize: '0.75rem'
             }}
             title={isVulnerable ? 'Switch to Safe Mode (All rules enforced)' : 'Switch to Vulnerable Mode (Reproduce bug)'}
           >
@@ -127,12 +140,13 @@ export default function Header({
 
         {/* Quick Load Demo Button */}
         <button
+          type="button"
           onClick={onLoadDemo}
           disabled={loading}
           className="btn btn-secondary btn-sm"
-          style={{ borderColor: '#38bdf8' }}
+          style={{ borderColor: 'var(--accent-cyan)' }}
         >
-          <Sparkles size={13} color="#38bdf8" />
+          <Sparkles size={13} color="var(--accent-cyan)" />
           <span>Try Interactive Demo</span>
         </button>
       </div>

@@ -8,7 +8,9 @@ import {
   CheckSquare,
   Square,
   Download,
-  AlertCircle
+  AlertCircle,
+  ChevronsUpDown,
+  Filter
 } from 'lucide-react';
 import TestCaseCard from './TestCaseCard.jsx';
 
@@ -27,6 +29,8 @@ export default function TestSuitePanel({
   running
 }) {
   const [filterCategory, setFilterCategory] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'failed' | 'review' | 'passed'
+  const [expandAll, setExpandAll] = useState(false);
 
   if (!testSuite || !testSuite.tests || testSuite.tests.length === 0) {
     return (
@@ -36,7 +40,7 @@ export default function TestSuitePanel({
           No Test Suite Generated Yet
         </h3>
         <p style={{ fontSize: '0.85rem', maxWidth: '420px', margin: '0 auto 1.5rem', color: '#64748b' }}>
-          Configure an endpoint on the left and click <strong>"Generate Test Plan"</strong>. Gemma 4 will formulate adversarial edge cases, boundary checks, and business-rule verifications.
+          Configure an endpoint on the left and click <strong>"Generate Test Plan"</strong>. Formulates adversarial edge cases, boundary checks, and business-rule verifications.
         </p>
       </div>
     );
@@ -44,9 +48,27 @@ export default function TestSuitePanel({
 
   const tests = testSuite.tests;
   const selectedCount = tests.filter(t => t.selected !== false).length;
-  const filteredTests = filterCategory === 'all'
-    ? tests
-    : tests.filter(t => t.category === filterCategory);
+
+  const filteredTests = tests.filter(t => {
+    // Category filter
+    if (filterCategory !== 'all' && t.category !== filterCategory) {
+      return false;
+    }
+    // Execution status triage filter
+    if (statusFilter !== 'all') {
+      const testResult = results?.find(r => r.id === t.id);
+      if (statusFilter === 'failed') {
+        return testResult?.status === 'FAIL' || testResult?.status === 'ERROR';
+      }
+      if (statusFilter === 'review') {
+        return t.requiresReview && !t.confirmed;
+      }
+      if (statusFilter === 'passed') {
+        return testResult?.status === 'PASS';
+      }
+    }
+    return true;
+  });
 
   const categories = Array.from(new Set(tests.map(t => t.category)));
 
@@ -59,11 +81,11 @@ export default function TestSuitePanel({
             <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#f8fafc' }}>
               {testSuite.suiteName}
             </h3>
-            <span style={{ fontSize: '0.72rem', background: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', padding: '0.15rem 0.5rem', borderRadius: '4px', fontWeight: 600 }}>
+            <span style={{ fontSize: '0.72rem', background: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', padding: '0.15rem 0.5rem', borderRadius: 'var(--radius-sm)', fontWeight: 600 }}>
               {tests.length} Scenarios
             </span>
             {testSuite.isPredefinedDemo && (
-              <span style={{ fontSize: '0.7rem', background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 600 }}>
+              <span style={{ fontSize: '0.7rem', background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', padding: '0.15rem 0.45rem', borderRadius: 'var(--radius-sm)', fontWeight: 600 }}>
                 Deterministic Demo Suite
               </span>
             )}
@@ -101,72 +123,177 @@ export default function TestSuitePanel({
         }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>TOTAL</div>
-            <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#f8fafc' }}>{summary.total}</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.2rem', fontWeight: 700, color: '#f8fafc' }}>{summary.total}</div>
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '0.72rem', color: 'var(--color-pass)' }}>PASSED</div>
-            <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--color-pass)' }}>{summary.passed}</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.2rem', fontWeight: 700, color: 'var(--color-pass)' }}>{summary.passed}</div>
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '0.72rem', color: 'var(--color-fail)' }}>FAILED</div>
-            <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--color-fail)' }}>{summary.failed}</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.2rem', fontWeight: 700, color: 'var(--color-fail)' }}>{summary.failed}</div>
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '0.72rem', color: '#64748b' }}>ERRORS</div>
-            <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#94a3b8' }}>{summary.errors}</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.2rem', fontWeight: 700, color: '#94a3b8' }}>{summary.errors}</div>
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '0.72rem', color: 'var(--color-warn)' }}>NEEDS REVIEW</div>
-            <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--color-warn)' }}>{summary.needsReview}</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.2rem', fontWeight: 700, color: 'var(--color-warn)' }}>{summary.needsReview}</div>
           </div>
         </div>
       )}
 
-      {/* Control Bar: Select All / Deselect All / Category Filter */}
+      {/* Control Toolbar Container: Tier 1 & Tier 2 */}
       <div style={{
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '0.6rem',
-        marginBottom: '0.9rem',
-        paddingBottom: '0.75rem',
-        borderBottom: '1px solid var(--border-subtle)'
+        flexDirection: 'column',
+        gap: '0.65rem',
+        marginBottom: '1rem',
+        padding: '0.75rem 0.9rem',
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-subtle)',
+        borderRadius: 'var(--radius-sm)'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-          <button
-            onClick={onSelectAll}
-            disabled={running}
-            className="btn btn-secondary btn-sm"
-            style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
-          >
-            <CheckSquare size={13} />
-            <span>Select All</span>
-          </button>
-          <button
-            onClick={onDeselectAll}
-            disabled={running}
-            className="btn btn-secondary btn-sm"
-            style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
-          >
-            <Square size={13} />
-            <span>Deselect All</span>
-          </button>
+        {/* Tier 1: Suite Execution & Status Triage Actions */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '0.6rem'
+        }}>
+          {/* Suite Bulk Actions */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+            <button
+              onClick={onSelectAll}
+              disabled={running}
+              className="btn btn-secondary btn-sm"
+              style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+            >
+              <CheckSquare size={13} />
+              <span>Select All</span>
+            </button>
+            <button
+              onClick={onDeselectAll}
+              disabled={running}
+              className="btn btn-secondary btn-sm"
+              style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+            >
+              <Square size={13} />
+              <span>Deselect All</span>
+            </button>
+            <button
+              onClick={() => setExpandAll(!expandAll)}
+              className="btn btn-secondary btn-sm"
+              style={{ fontSize: '0.75rem', padding: '0.25rem 0.55rem' }}
+              title={expandAll ? "Collapse all test cards" : "Expand all test cards"}
+            >
+              <ChevronsUpDown size={13} />
+              <span>{expandAll ? 'Collapse All' : 'Expand All'}</span>
+            </button>
+          </div>
+
+          {/* Status Triage Chips (when summary exists) */}
+          {summary && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', marginRight: '2px' }}>
+                Triage:
+              </span>
+              <button
+                onClick={() => setStatusFilter('all')}
+                style={{
+                  padding: '0.2rem 0.55rem',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  background: statusFilter === 'all' ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
+                  color: statusFilter === 'all' ? '#38bdf8' : '#94a3b8',
+                  border: statusFilter === 'all' ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid var(--border-subtle)'
+                }}
+              >
+                All Results
+              </button>
+              {summary.failed > 0 && (
+                <button
+                  onClick={() => setStatusFilter(statusFilter === 'failed' ? 'all' : 'failed')}
+                  style={{
+                    padding: '0.2rem 0.55rem',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    background: statusFilter === 'failed' ? 'var(--bg-fail)' : 'transparent',
+                    color: 'var(--color-fail)',
+                    border: statusFilter === 'failed' ? '1px solid var(--border-fail)' : '1px solid rgba(244, 63, 94, 0.3)'
+                  }}
+                >
+                  Failed Only ({summary.failed})
+                </button>
+              )}
+              {summary.needsReview > 0 && (
+                <button
+                  onClick={() => setStatusFilter(statusFilter === 'review' ? 'all' : 'review')}
+                  style={{
+                    padding: '0.2rem 0.55rem',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    background: statusFilter === 'review' ? 'var(--bg-warn)' : 'transparent',
+                    color: 'var(--color-warn)',
+                    border: statusFilter === 'review' ? '1px solid var(--border-warn)' : '1px solid rgba(245, 158, 11, 0.3)'
+                  }}
+                >
+                  Needs Review ({summary.needsReview})
+                </button>
+              )}
+              {summary.passed > 0 && (
+                <button
+                  onClick={() => setStatusFilter(statusFilter === 'passed' ? 'all' : 'passed')}
+                  style={{
+                    padding: '0.2rem 0.55rem',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    background: statusFilter === 'passed' ? 'var(--bg-pass)' : 'transparent',
+                    color: 'var(--color-pass)',
+                    border: statusFilter === 'passed' ? '1px solid var(--border-pass)' : '1px solid rgba(16, 185, 129, 0.3)'
+                  }}
+                >
+                  Passed ({summary.passed})
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Category Filter Pills */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', overflowX: 'auto' }}>
+        {/* Tier 2: Category Domain Filtering Bar */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.4rem',
+          overflowX: 'auto',
+          paddingTop: '0.5rem',
+          borderTop: '1px solid rgba(26, 38, 61, 0.6)'
+        }}>
+          <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+            Domains:
+          </span>
           <button
             onClick={() => setFilterCategory('all')}
             style={{
               padding: '0.2rem 0.55rem',
-              borderRadius: '4px',
+              borderRadius: 'var(--radius-sm)',
               fontSize: '0.72rem',
               fontWeight: 500,
               cursor: 'pointer',
-              background: filterCategory === 'all' ? 'var(--accent-cyan)' : 'var(--bg-surface)',
-              color: filterCategory === 'all' ? '#000' : '#94a3b8',
-              border: '1px solid var(--border-subtle)'
+              background: filterCategory === 'all' ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
+              color: filterCategory === 'all' ? '#38bdf8' : '#94a3b8',
+              border: filterCategory === 'all' ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid var(--border-subtle)',
+              whiteSpace: 'nowrap'
             }}
           >
             All ({tests.length})
@@ -177,14 +304,15 @@ export default function TestSuitePanel({
               onClick={() => setFilterCategory(cat)}
               style={{
                 padding: '0.2rem 0.55rem',
-                borderRadius: '4px',
+                borderRadius: 'var(--radius-sm)',
                 fontSize: '0.72rem',
                 fontWeight: 500,
                 cursor: 'pointer',
-                background: filterCategory === cat ? 'var(--accent-cyan)' : 'var(--bg-surface)',
-                color: filterCategory === cat ? '#000' : '#94a3b8',
-                border: '1px solid var(--border-subtle)',
-                textTransform: 'capitalize'
+                background: filterCategory === cat ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
+                color: filterCategory === cat ? '#38bdf8' : '#94a3b8',
+                border: filterCategory === cat ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid var(--border-subtle)',
+                textTransform: 'capitalize',
+                whiteSpace: 'nowrap'
               }}
             >
               {cat.replace('_', ' ')}
@@ -242,6 +370,7 @@ export default function TestSuitePanel({
               onRunSingle={onRunSingle}
               onInspectFailure={onInspectFailure}
               running={running}
+              forceExpand={expandAll}
             />
           );
         })}

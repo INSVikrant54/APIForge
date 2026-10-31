@@ -1,0 +1,208 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-31T05:50:00.000Z",
+  "title": "Design System: APIForge",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Electric Beacon Cyan",
+        "canonical": "#38bdf8",
+        "tonalRamp": ["#082f49", "#0c4a6e", "#0369a1", "#0284c7", "#0ea5e9", "#38bdf8", "#7dd3fc", "#bae6fd"]
+      },
+      "primary-gradient-end": {
+        "role": "primary",
+        "displayName": "Beacon Indigo",
+        "canonical": "#6366f1",
+        "tonalRamp": ["#1e1b4b", "#312e81", "#3730a3", "#4338ca", "#4f46e5", "#6366f1", "#818cf8", "#a5b4fc"]
+      },
+      "neutral-bg": {
+        "role": "neutral",
+        "displayName": "Obsidian Void",
+        "canonical": "#060911",
+        "tonalRamp": ["#020408", "#060911", "#0b1120", "#10192e", "#1a263d", "#2a3b5c", "#64748b", "#94a3b8"]
+      },
+      "neutral-surface": {
+        "role": "neutral",
+        "displayName": "Surface Slate",
+        "canonical": "#0b1120",
+        "tonalRamp": ["#04070d", "#080e19", "#0b1120", "#131b2e", "#1f2b45", "#304163", "#495d85", "#7084ab"]
+      },
+      "neutral-card": {
+        "role": "neutral",
+        "displayName": "Deep Card Navy",
+        "canonical": "#10192e",
+        "tonalRamp": ["#070a14", "#0b1120", "#10192e", "#17233f", "#203053", "#2c406c", "#415b94", "#617db7"]
+      },
+      "status-pass": {
+        "role": "semantic-pass",
+        "displayName": "Pass Emerald",
+        "canonical": "#10b981",
+        "tonalRamp": ["#022c22", "#064e3b", "#065f46", "#047857", "#059669", "#10b981", "#34d399", "#6ee7b7"]
+      },
+      "status-fail": {
+        "role": "semantic-fail",
+        "displayName": "Fail Rose",
+        "canonical": "#f43f5e",
+        "tonalRamp": ["#4c0519", "#881337", "#9f1239", "#be123c", "#e11d48", "#f43f5e", "#fb7185", "#fda4af"]
+      },
+      "status-warn": {
+        "role": "semantic-warn",
+        "displayName": "Review Amber",
+        "canonical": "#f59e0b",
+        "tonalRamp": ["#451a03", "#78350f", "#92400e", "#b45309", "#d97706", "#f59e0b", "#fbbf24", "#fde68a"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Hero brand titles and major modal headings." },
+      "headline": { "displayName": "Headline", "purpose": "Top navigation title and section headers." },
+      "title": { "displayName": "Title", "purpose": "Panel headers and test case card names." },
+      "body": { "displayName": "Body", "purpose": "Standard explanatory copy and documentation." },
+      "label": { "displayName": "Label", "purpose": "Form field labels, chips, and button text." },
+      "code": { "displayName": "Monospace Code", "purpose": "Endpoints, JSON bodies, cURLs, and assertions." }
+    },
+    "shadows": [
+      {
+        "name": "primary-button-glow",
+        "value": "0 2px 10px rgba(56, 189, 248, 0.25)",
+        "purpose": "Subtle luminous aura on primary action buttons."
+      },
+      {
+        "name": "primary-button-hover",
+        "value": "0 4px 14px rgba(56, 189, 248, 0.35)",
+        "purpose": "Elevated cyan glow on primary button hover."
+      },
+      {
+        "name": "focus-ring-glow",
+        "value": "0 0 0 2px rgba(56, 189, 248, 0.27)",
+        "purpose": "High-visibility focus ring on inputs and controls."
+      },
+      {
+        "name": "modal-elevation",
+        "value": "0 20px 40px rgba(0, 0, 0, 0.6)",
+        "purpose": "High-depth shadow for dialog backdrops."
+      }
+    ],
+    "motion": [
+      {
+        "name": "transition-fast",
+        "value": "all 0.15s ease",
+        "purpose": "Rapid state feedback for buttons, cards, and inputs."
+      },
+      {
+        "name": "spin-indicator",
+        "value": "spin 1s linear infinite",
+        "purpose": "Loading spinner rotation."
+      }
+    ],
+    "breakpoints": [
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary action button for analyzing rules or running test suites.",
+      "html": "<button class=\"ds-btn-primary\">RUN TEST SUITE</button>",
+      "css": ".ds-btn-primary { background: linear-gradient(135deg, #38bdf8 0%, #6366f1 100%); color: #ffffff; padding: 8px 14px; font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 500; border: none; border-radius: 6px; cursor: pointer; box-shadow: 0 2px 10px rgba(56, 189, 248, 0.25); transition: all 0.15s ease; } .ds-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(56, 189, 248, 0.35); opacity: 0.95; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Secondary action button for filters, modals, and utilities.",
+      "html": "<button class=\"ds-btn-secondary\">DISCARD</button>",
+      "css": ".ds-btn-secondary { background: #0b1120; color: #f1f5f9; border: 1px solid #2a3b5c; padding: 8px 14px; font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 500; border-radius: 6px; cursor: pointer; transition: all 0.15s ease; } .ds-btn-secondary:hover { background: #15223e; border-color: #38bdf8; }"
+    },
+    {
+      "name": "Console Input",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Recessed monospace input field for API endpoints and variables.",
+      "html": "<input class=\"ds-input-field\" type=\"text\" value=\"POST /api/demo/orders\" />",
+      "css": ".ds-input-field { background: #080d19; color: #f1f5f9; border: 1px solid #1a263d; border-radius: 6px; padding: 9px 13px; font-family: 'Fira Code', monospace; font-size: 0.85rem; outline: none; width: 100%; box-sizing: border-box; transition: border-color 0.15s ease, box-shadow 0.15s ease; } .ds-input-field:focus { border-color: #38bdf8; box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.27); }"
+    },
+    {
+      "name": "Status Badge (Pass)",
+      "kind": "chip",
+      "refersTo": "status-pass",
+      "description": "Deterministic verified passing assertion status.",
+      "html": "<span class=\"ds-badge ds-badge-pass\">PASS</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; font-family: 'Inter', sans-serif; font-size: 0.72rem; font-weight: 600; padding: 3px 9px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.04em; } .ds-badge-pass { background: rgba(16, 185, 129, 0.12); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }"
+    },
+    {
+      "name": "Status Badge (Fail)",
+      "kind": "chip",
+      "refersTo": "status-fail",
+      "description": "Deterministic assertion violation status.",
+      "html": "<span class=\"ds-badge ds-badge-fail\">FAIL</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; font-family: 'Inter', sans-serif; font-size: 0.72rem; font-weight: 600; padding: 3px 9px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.04em; } .ds-badge-fail { background: rgba(244, 63, 94, 0.12); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.3); }"
+    },
+    {
+      "name": "Method Badge (POST)",
+      "kind": "chip",
+      "refersTo": "method-post",
+      "description": "HTTP method indicator pill for POST endpoints.",
+      "html": "<span class=\"ds-method ds-method-post\">POST</span>",
+      "css": ".ds-method { font-family: 'Fira Code', monospace; font-size: 0.75rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; } .ds-method-post { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }"
+    },
+    {
+      "name": "Test Case Card",
+      "kind": "card",
+      "refersTo": "card-container",
+      "description": "Interactive test case card for verification suites.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-header\"><span class=\"ds-method ds-method-post\">POST</span><span class=\"ds-card-title\">Reject negative quantity (-5)</span><span class=\"ds-badge ds-badge-pass\">PASS</span></div></div>",
+      "css": ".ds-card { background: #10192e; border: 1px solid #1a263d; border-radius: 10px; padding: 14px 16px; transition: border-color 0.15s ease; font-family: 'Inter', sans-serif; } .ds-card:hover { border-color: #2a3b5c; } .ds-card-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; } .ds-card-title { font-size: 0.88rem; font-weight: 600; color: #f1f5f9; flex: 1; margin: 0; } .ds-method { font-family: 'Fira Code', monospace; font-size: 0.75rem; font-weight: 700; padding: 3px 7px; border-radius: 6px; text-transform: uppercase; background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); } .ds-badge { display: inline-flex; align-items: center; font-size: 0.72rem; font-weight: 600; padding: 3px 9px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.04em; background: rgba(16, 185, 129, 0.12); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Precision Avionics Cockpit",
+    "overview": "APIForge is an engineered verification workbench designed for developers, QA engineers, and security teams testing mission-critical APIs. The interface operates like modern avionics telemetry: high-contrast dark surfaces, crisp monospace data readouts, and surgical electric cyan instrumentation. Every visual element serves diagnostic scanability and actionable triage.\n\nThe aesthetic rejects \"SaaS Bloat\" — no gratuitous purple gradients, washed-out low-contrast gray text, pastel toy badges, or slow decorative animations. Visual noise is treated as a defect. Interactive density is high, with tight structural spacing, clear 1px division boundaries, and unmistakable status cues that distinguish passing contracts from catastrophic failures at a glance.",
+    "keyCharacteristics": [
+      "High-contrast dark telemetry theme with stepped obsidian, slate, and navy tiers.",
+      "Surgical cyan accents reserved strictly for primary actions, active indicators, and focus boundaries.",
+      "Dedicated monospace typography for all endpoints, payloads, status codes, and assertions.",
+      "Flat-by-default surfaces utilizing 1px structural hairline borders instead of muddy drop shadows.",
+      "Unambiguous semantic indicators (emerald, rose, amber) dedicated solely to deterministic test verdicts."
+    ],
+    "rules": [
+      {
+        "name": "The Surgical Accent Rule",
+        "body": "Electric Cyan (#38bdf8) is strictly reserved for primary actions, active indicators, and focus rings (≤10% of any viewport). Its rarity creates immediate visual hierarchy.",
+        "section": "colors"
+      },
+      {
+        "name": "The Semantic Isolation Rule",
+        "body": "Emerald (#10b981), Rose (#f43f5e), and Amber (#f59e0b) are strictly forbidden for generic decorative elements, neutral buttons, or navigation. They signify deterministic pass, fail, and ambiguity review states only.",
+        "section": "colors"
+      },
+      {
+        "name": "The Monospace Verification Rule",
+        "body": "All HTTP paths, payload bodies, status codes, cURL commands, and assertion parameters must render in Fira Code monospace typography to preserve mechanical precision.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-By-Default Rule",
+        "body": "Surfaces are flat at rest. Depth is established through background luminance steps and 1px structural hairline borders. Shadows appear strictly as luminous responses to user focus, hover, or modal dialog elevation.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do strictly limit Electric Cyan (#38bdf8) to primary CTAs, active selections, and focus rings (≤10% of viewport area).",
+      "Do render all HTTP endpoints, JSON bodies, cURL commands, and assertion rules in Fira Code monospace.",
+      "Do use stepped background luminance (#060911 -> #0b1120 -> #10192e) and 1px hairline borders (#1a263d) to convey depth.",
+      "Do provide instant visual feedback on input focus with the 0 0 0 2px rgba(56, 189, 248, 0.27) cyan glow ring.",
+      "Do use uppercase method pills and status badges with dedicated semi-transparent tinted backgrounds."
+    ],
+    "donts": [
+      "Don't use generic purple SaaS gradients or pastel cartoonish colors on neutral components or containers.",
+      "Don't use emerald (#10b981), rose (#f43f5e), or amber (#f59e0b) for decorative UI elements; they are strictly reserved for deterministic pass/fail/review telemetry.",
+      "Don't cast heavy, blurry black drop shadows under cards at rest; keep resting surfaces flat.",
+      "Don't use low-contrast gray text on dark backgrounds; ensure text meets minimum 4.5:1 contrast against its immediate container.",
+      "Don't introduce slow, distracting animations that delay developer workflows; keep transitions under 0.15s ease."
+    ]
+  }
+}
+

@@ -28,10 +28,13 @@ export default function App() {
   const [demoMode, setDemoModeState] = useState({ mode: 'vulnerable' });
   const [timeoutMs, setTimeoutMs] = useState(6000);
 
-  // AI Key & Model Settings (BYOK support)
+  // AI Key & Model Settings (BYOK support - session only, zero persistent disk secrets)
   const [aiSettings, setAiSettings] = useState(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY_AI_SETTINGS);
+      const saved = sessionStorage.getItem(STORAGE_KEY_AI_SETTINGS) || localStorage.getItem(STORAGE_KEY_AI_SETTINGS);
+      if (localStorage.getItem(STORAGE_KEY_AI_SETTINGS)) {
+        localStorage.removeItem(STORAGE_KEY_AI_SETTINGS); // Purge from permanent disk
+      }
       return saved ? JSON.parse(saved) : { useServerKey: true, customKey: '', model: 'gemma-4-26b-a4b-it' };
     } catch {
       return { useServerKey: true, customKey: '', model: 'gemma-4-26b-a4b-it' };
@@ -88,7 +91,8 @@ export default function App() {
   const handleSaveAiSettings = (newSettings) => {
     setAiSettings(newSettings);
     try {
-      localStorage.setItem(STORAGE_KEY_AI_SETTINGS, JSON.stringify(newSettings));
+      sessionStorage.setItem(STORAGE_KEY_AI_SETTINGS, JSON.stringify(newSettings));
+      localStorage.removeItem(STORAGE_KEY_AI_SETTINGS); // Ensure zero disk persistence
     } catch {
       // Ignore storage errors
     }
@@ -302,6 +306,7 @@ export default function App() {
         currentTab={currentTab}
         onSelectTab={setCurrentTab}
         recentRunsCount={recentRuns.length}
+        activeModel={aiSettings?.model || health?.model || 'gemma-4-26b-a4b-it'}
       />
 
       {/* Main App Area */}
@@ -329,6 +334,7 @@ export default function App() {
                   onGeneratePlan={handleGeneratePlan}
                   loading={loadingPlan}
                   error={planError}
+                  activeModel={aiSettings?.model || health?.model || 'gemma-4-26b-a4b-it'}
                 />
               </div>
 
@@ -397,10 +403,13 @@ export default function App() {
           test={inspectingFailure.test}
           result={inspectingFailure.result}
           businessRules={config.businessRules}
+          activeModel={aiSettings?.model || health?.model || 'gemma-4-26b-a4b-it'}
           onClose={() => setInspectingFailure(null)}
           onExplainFailure={handleExplainFailure}
           explaining={explainingFailure}
           explanation={failureExplanation}
+          onRunSingle={handleRunSingle}
+          runningTests={runningTests}
         />
       )}
 

@@ -37,3 +37,10 @@ tests/
 server/test/
 *.test.js
 scratch/
+
+# AI Agent Tooling & Binaries
+.agent/
+.agents/
+.gemini/
+.codex/
+*.exe
