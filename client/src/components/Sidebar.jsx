@@ -5,7 +5,7 @@ export default function Sidebar({
   currentTab,
   onSelectTab,
   recentRunsCount = 0,
-  activeModel = 'gemma-4-26b-a4b-it'
+  activeModel = 'gemini-3.5-flash-lite'
 }) {
   const navItems = [
     { id: 'lab', label: 'Test Lab', icon: FlaskConical },

@@ -83,10 +83,10 @@ APIForge includes native **BYOK (Bring Your Own Key)** support directly within t
 
 - **Centralized or Individual:** Run APIForge using the server-side environment key (`GEMINI_API_KEY`), or allow developers and team members to supply their own personal Gemini API key directly from the browser.
 - **Model Switching:** Easily switch between supported models without restarting containers:
-  - `gemma-4-26b-a4b-it` (Default high-precision reasoning)
+  - `gemini-3.5-flash-lite` (Default ultra-fast low-latency response model)
+  - `gemini-3.5-flash` (High-speed general model)
+  - `gemma-4-26b-a4b-it` (High-precision open-weights reasoning)
   - `gemma-4-31b-it` (Larger reasoning model)
-  - `gemini-3.8-flash` (High-speed general model)
-  - `gemini-2.5-flash` (Fastest response model — low latency)
   - Custom model ID (for fine-tuned or internal Gemini endpoints)
 - **Live Connection Diagnostics:** Test key validity and model access instantly with the built-in **Test Connection** button (`POST /api/verify-key`).
 - **In-Memory Security:** User-supplied keys are maintained strictly in client memory and transmitted via runtime HTTP headers (`x-gemini-api-key`). Custom keys are never written to disk, databases, or log files.
@@ -232,8 +232,8 @@ Configure your environment settings:
 # Your Gemini API Key from Google AI Studio (https://aistudio.google.com/)
 GEMINI_API_KEY=your_gemini_api_key_here
 
-# Gemma 4 Model ID
-GEMMA_MODEL=gemma-4-26b-a4b-it
+# Default AI Model ID (e.g. gemini-3.5-flash-lite, gemma-4-26b-a4b-it)
+GEMMA_MODEL=gemini-3.5-flash-lite
 
 # Server Port (Default: 5000)
 PORT=5000

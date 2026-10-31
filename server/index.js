@@ -29,7 +29,7 @@ app.get('/api/health', (req, res) => {
     status: 'ok',
     app: 'APIForge',
     aiConfigured: hasKey,
-    model: process.env.GEMMA_MODEL || 'gemma-4-26b-a4b-it',
+    model: process.env.GEMMA_MODEL || 'gemini-3.5-flash-lite',
     timestamp: new Date().toISOString()
   });
 });

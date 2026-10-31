@@ -106,7 +106,7 @@ export async function generateTestPlan(apiConfig) {
   } = apiConfig;
 
   const client = getGenAIClient(customApiKey);
-  const modelName = customModel || process.env.GEMMA_MODEL || 'gemma-4-26b-a4b-it';
+  const modelName = customModel || process.env.GEMMA_MODEL || 'gemini-3.5-flash-lite';
 
   // If client is missing or user explicitly requested offline demo for the demo route:
   if (!client || useOfflineDemo) {
@@ -251,7 +251,7 @@ Generate a comprehensive, balanced collection of 8 to 12 realistic test cases ac
 export async function explainFailure(details) {
   const { test, actual, businessRules, customApiKey, customModel } = details;
   const client = getGenAIClient(customApiKey);
-  const modelName = customModel || process.env.GEMMA_MODEL || 'gemma-4-26b-a4b-it';
+  const modelName = customModel || process.env.GEMMA_MODEL || 'gemini-3.5-flash-lite';
 
   // Deterministic local explanation if client is not configured
   if (!client) {

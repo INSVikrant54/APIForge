@@ -20,7 +20,7 @@ export default function FailureDetailModal({
   onExplainFailure,
   explaining,
   explanation,
-  activeModel = 'gemma-4-26b-a4b-it',
+  activeModel = 'gemini-3.5-flash-lite',
   onRunSingle,
   runningTests = false
 }) {

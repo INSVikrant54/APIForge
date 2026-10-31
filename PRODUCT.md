@@ -16,7 +16,7 @@ APIForge discovers hidden API defects, contract ambiguities, and unhandled edge 
 
 ## Positioning
 
-Deterministic adversarial verification: Flexible multi-model AI synthesis (defaulting to Gemma 4 `gemma-4-26b-a4b-it`, with built-in support for any model offered by the API such as `gemini-3.5-flash`, `gemini-3.5-flash-lite`, `gemma-4-31b-it`, as well as user-defined custom model IDs paired with Bring-Your-Own-Key authentication) synthesizes adversarial test plans and edge-case payloads across 7 categories. Pass/fail verdicts are strictly evaluated via real HTTP execution and a deterministic assertion engine (zero hallucinated results). Paired with human-in-the-loop payload inspection, built-in interactive sandbox testing (Safe vs. Vulnerable modes), enterprise SSRF protection, and 1-click CI/CD regression suite export (Jest & Pytest).
+Deterministic adversarial verification: Flexible multi-model AI synthesis (defaulting to `gemini-3.5-flash-lite` for high-speed low-latency generation, with built-in support for Gemma 4 `gemma-4-26b-a4b-it`, `gemini-3.5-flash`, `gemma-4-31b-it`, as well as user-defined custom model IDs paired with Bring-Your-Own-Key authentication) synthesizes adversarial test plans and edge-case payloads across 7 categories. Pass/fail verdicts are strictly evaluated via real HTTP execution and a deterministic assertion engine (zero hallucinated results). Paired with human-in-the-loop payload inspection, built-in interactive sandbox testing (Safe vs. Vulnerable modes), enterprise SSRF protection, and 1-click CI/CD regression suite export (Jest & Pytest).
 
 ## Operating Context
 

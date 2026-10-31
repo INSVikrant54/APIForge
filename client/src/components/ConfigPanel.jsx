@@ -10,7 +10,7 @@ export default function ConfigPanel({
   onGeneratePlan,
   loading,
   error,
-  activeModel = 'gemma-4-26b-a4b-it'
+  activeModel = 'gemini-3.5-flash-lite'
 }) {
   const [activeTab, setActiveTab] = useState('body'); // 'body' | 'headers' | 'response'
   const [formatErrors, setFormatErrors] = useState({

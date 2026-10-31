@@ -19,7 +19,7 @@ export default function ApiKeyModal({
 }) {
   const [useServerKey, setUseServerKey] = useState(aiSettings.useServerKey);
   const [customKey, setCustomKey] = useState(aiSettings.customKey || '');
-  const [selectedModel, setSelectedModel] = useState(aiSettings.model || 'gemma-4-26b-a4b-it');
+  const [selectedModel, setSelectedModel] = useState(aiSettings.model || 'gemini-3.5-flash-lite');
   const [customModelId, setCustomModelId] = useState(
     !AVAILABLE_MODELS.some(m => m.id === aiSettings.model && m.id !== 'custom')
       ? aiSettings.model
@@ -43,7 +43,7 @@ export default function ApiKeyModal({
 
   if (!isOpen) return null;
 
-  const activeModel = selectedModel === 'custom' ? (customModelId.trim() || 'gemma-4-26b-a4b-it') : selectedModel;
+  const activeModel = selectedModel === 'custom' ? (customModelId.trim() || 'gemini-3.5-flash-lite') : selectedModel;
 
   const handleTestConnection = async () => {
     setVerifying(true);

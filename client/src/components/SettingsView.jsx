@@ -4,7 +4,7 @@ import { Settings, Cpu, Shield, Key } from 'lucide-react';
 export default function SettingsView({ health, aiSettings, onOpenAiSettings, timeoutMs, onChangeTimeout }) {
   const isCustomKey = aiSettings && !aiSettings.useServerKey && aiSettings.customKey;
   const isServerConfigured = health?.aiConfigured;
-  const activeModel = aiSettings?.model || health?.model || 'gemma-4-26b-a4b-it';
+  const activeModel = aiSettings?.model || health?.model || 'gemini-3.5-flash-lite';
 
   return (
     <div className="card" style={{ maxWidth: '800px', margin: '0 auto' }}>

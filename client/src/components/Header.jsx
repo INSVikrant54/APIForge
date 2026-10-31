@@ -13,7 +13,7 @@ export default function Header({
   const isVulnerable = demoMode?.mode === 'vulnerable';
   const isCustomKeyActive = aiSettings && !aiSettings.useServerKey && aiSettings.customKey;
   const isServerConfigured = health?.aiConfigured;
-  const activeModel = aiSettings?.model || health?.model || 'gemma-4-26b-a4b-it';
+  const activeModel = aiSettings?.model || health?.model || 'gemini-3.5-flash-lite';
 
   // Determine badge text and styling dynamically based on model family
   const modelFamily = activeModel.startsWith('gemma')

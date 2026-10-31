@@ -35,9 +35,9 @@ export default function App() {
       if (localStorage.getItem(STORAGE_KEY_AI_SETTINGS)) {
         localStorage.removeItem(STORAGE_KEY_AI_SETTINGS); // Purge from permanent disk
       }
-      return saved ? JSON.parse(saved) : { useServerKey: true, customKey: '', model: 'gemma-4-26b-a4b-it' };
+      return saved ? JSON.parse(saved) : { useServerKey: true, customKey: '', model: 'gemini-3.5-flash-lite' };
     } catch {
-      return { useServerKey: true, customKey: '', model: 'gemma-4-26b-a4b-it' };
+      return { useServerKey: true, customKey: '', model: 'gemini-3.5-flash-lite' };
     }
   });
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
@@ -306,7 +306,7 @@ export default function App() {
         currentTab={currentTab}
         onSelectTab={setCurrentTab}
         recentRunsCount={recentRuns.length}
-        activeModel={aiSettings?.model || health?.model || 'gemma-4-26b-a4b-it'}
+        activeModel={aiSettings?.model || health?.model || 'gemini-3.5-flash-lite'}
       />
 
       {/* Main App Area */}
@@ -334,7 +334,7 @@ export default function App() {
                   onGeneratePlan={handleGeneratePlan}
                   loading={loadingPlan}
                   error={planError}
-                  activeModel={aiSettings?.model || health?.model || 'gemma-4-26b-a4b-it'}
+                  activeModel={aiSettings?.model || health?.model || 'gemini-3.5-flash-lite'}
                 />
               </div>
 
@@ -403,7 +403,7 @@ export default function App() {
           test={inspectingFailure.test}
           result={inspectingFailure.result}
           businessRules={config.businessRules}
-          activeModel={aiSettings?.model || health?.model || 'gemma-4-26b-a4b-it'}
+          activeModel={aiSettings?.model || health?.model || 'gemini-3.5-flash-lite'}
           onClose={() => setInspectingFailure(null)}
           onExplainFailure={handleExplainFailure}
           explaining={explainingFailure}
