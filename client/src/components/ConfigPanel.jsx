@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Sparkles, Code, AlertCircle, Wand2, Check } from 'lucide-react';
-import { PRESETS } from '../utils/presets.js';
+
 
 const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
@@ -19,7 +19,7 @@ export default function ConfigPanel({
     response: null
   });
   const [beautified, setBeautified] = useState(false);
-  const [undoBackup, setUndoBackup] = useState(null);
+  const isMac = typeof navigator !== 'undefined' && /Mac/i.test(navigator.platform || navigator.userAgent || '');
 
   const handleMethodChange = (method) => {
     onChangeConfig({
@@ -27,51 +27,6 @@ export default function ConfigPanel({
       method,
       expectedStatus: method === 'POST' ? 201 : 200
     });
-  };
-
-  const handlePresetSelect = (presetId) => {
-    const preset = PRESETS.find(p => p.id === presetId);
-    if (!preset) return;
-
-    // Snapshot existing config to allow instant undo if user had active edits
-    const hasCustomEdits = Boolean(
-      config.path ||
-      config.businessRules ||
-      (config.body && Object.keys(config.body).length > 0)
-    );
-
-    if (hasCustomEdits) {
-      setUndoBackup({
-        config: { ...config },
-        errors: { ...formatErrors },
-        presetName: preset.name
-      });
-      setTimeout(() => {
-        setUndoBackup(prev => (prev?.presetName === preset.name ? null : prev));
-      }, 10000);
-    }
-
-    onChangeConfig({
-      method: preset.method,
-      path: preset.path,
-      expectedStatus: preset.expectedStatus,
-      headers: preset.headers,
-      body: preset.body,
-      sampleResponse: preset.sampleResponse,
-      businessRules: preset.businessRules
-    });
-    setFormatErrors({
-      body: null,
-      headers: null,
-      response: null
-    });
-  };
-
-  const handleUndoPresetOverwrite = () => {
-    if (!undoBackup) return;
-    onChangeConfig(undoBackup.config);
-    setFormatErrors(undoBackup.errors || { body: null, headers: null, response: null });
-    setUndoBackup(null);
   };
 
   const activeErrorTabs = Object.keys(formatErrors).filter(k => Boolean(formatErrors[k]));
@@ -179,50 +134,13 @@ export default function ConfigPanel({
     : (config.sampleResponse || '');
 
   return (
-    <div className="card">
+    <div className="card request-panel">
       <div className="card-header">
         <div className="card-title">
-          <Code size={18} color="var(--accent-cyan)" />
-          <span>API Specification & Business Rules</span>
+          <Code size={18} />
+          <span>Describe the request</span>
         </div>
-
-        {/* Preset Selector */}
-        <select
-          className="form-select"
-          style={{ fontSize: '0.8rem', padding: '0.25rem 0.6rem' }}
-          onChange={(e) => handlePresetSelect(e.target.value)}
-          defaultValue="demo-orders"
-          aria-label="Load API Preset Scenario"
-        >
-          {PRESETS.map(p => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
-        </select>
       </div>
-
-      {undoBackup && (
-        <div style={{
-          background: 'var(--bg-card-hover)',
-          border: '1px solid var(--accent-cyan)',
-          padding: '0.45rem 0.75rem',
-          borderRadius: 'var(--radius-sm)',
-          fontSize: '0.78rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '0.85rem'
-        }}>
-          <span>Loaded preset <strong>{undoBackup.presetName}</strong>. Previous specification backed up.</span>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            style={{ padding: '0.2rem 0.55rem', fontSize: '0.72rem' }}
-            onClick={handleUndoPresetOverwrite}
-          >
-            Undo Overwrite
-          </button>
-        </div>
-      )}
 
       {error && (
         <div style={{
@@ -242,9 +160,9 @@ export default function ConfigPanel({
         </div>
       )}
 
-      {/* HTTP Method Selector & Endpoint URL */}
+      {/* HTTP Method & Endpoint */}
       <div className="form-group">
-        <label className="form-label">HTTP Method & Target Endpoint</label>
+        <label className="form-label">Endpoint</label>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <div
             role="radiogroup"
@@ -270,7 +188,8 @@ export default function ConfigPanel({
                   style={{
                     background: isSelected ? undefined : 'transparent',
                     border: isSelected ? undefined : '1px solid transparent',
-                    opacity: isSelected ? 1 : 0.45,
+                    color: isSelected ? undefined : 'var(--text-muted)',
+                    opacity: 1,
                     cursor: 'pointer'
                   }}
                 >
@@ -289,6 +208,7 @@ export default function ConfigPanel({
             onKeyDown={handleFormKeyDown}
             placeholder="/api/demo/orders or https://api.yoursite.com/orders"
             aria-label="Target Endpoint URL"
+            aria-describedby="endpoint-guard-hint"
           />
 
           <div style={{ width: '90px' }}>
@@ -304,6 +224,10 @@ export default function ConfigPanel({
             />
           </div>
         </div>
+        <p id="endpoint-guard-hint" style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.45, marginTop: '0.35rem' }}>
+          Absolute local and private URLs (localhost, 127.0.0.1, LAN, cloud metadata) are blocked by the SSRF guard.
+          Relative <code style={{ fontFamily: 'var(--font-mono)' }}>/api/demo/...</code> paths run against this app&apos;s sandbox.
+        </p>
       </div>
 
       {/* Tabs: Request Body | Headers | Sample Response */}
@@ -586,11 +510,10 @@ export default function ConfigPanel({
           style={{ minWidth: '190px' }}
           title={hasAnyFormatError
             ? `Fix JSON formatting errors in: ${activeErrorTabs.map(t => t === 'body' ? 'Request Body' : t === 'headers' ? 'Headers' : 'Sample Response').join(', ')}`
-            : "Generate Test Plan (Ctrl+Enter / ⌘+Enter)"}
+            : `Generate Test Plan (${isMac ? '⌘+Enter' : 'Ctrl+Enter'})`}
         >
           {loading ? (
             <>
-              <span className="pulse-dot" style={{ backgroundColor: '#fff' }} />
               <span>Analyzing with {activeModel}...</span>
             </>
           ) : (
@@ -605,7 +528,7 @@ export default function ConfigPanel({
                 borderRadius: 'var(--radius-sm)',
                 marginLeft: '4px',
                 border: '1px solid rgba(255, 255, 255, 0.2)'
-              }}>⌘↵</kbd>
+              }}>{isMac ? 'Cmd+Enter' : 'Ctrl+Enter'}</kbd>
             </>
           )}
         </button>

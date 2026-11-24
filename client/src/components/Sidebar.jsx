@@ -5,51 +5,29 @@ export default function Sidebar({
   currentTab,
   onSelectTab,
   recentRunsCount = 0,
-  activeModel = 'gemini-3.5-flash-lite'
+  activeModel = ''
 }) {
   const navItems = [
-    { id: 'lab', label: 'Test Lab', icon: FlaskConical },
-    { id: 'history', label: 'Recent Runs', icon: History, badge: recentRunsCount > 0 ? recentRunsCount : null },
-    { id: 'docs', label: 'Documentation', icon: BookOpen },
+    { id: 'lab', label: 'Workspace', icon: FlaskConical },
+    { id: 'history', label: 'Recent runs', icon: History, badge: recentRunsCount > 0 ? recentRunsCount : null },
+    { id: 'docs', label: 'How it works', icon: BookOpen },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
-  const engineName = activeModel.startsWith('gemma')
-    ? 'Gemma 4'
-    : activeModel.startsWith('gemini')
-      ? 'Gemini 3.5'
-      : 'BYOK Custom';
-
   return (
     <aside className="sidebar">
-      {/* Brand Header */}
+      {/* Brand */}
       <div style={{
         padding: '1.25rem 1.25rem 1rem',
         borderBottom: '1px solid var(--border-subtle)',
         display: 'flex',
         alignItems: 'center',
-        gap: '0.75rem'
+        gap: '0.5rem'
       }}>
-        <div style={{
-          width: '34px',
-          height: '34px',
-          borderRadius: 'var(--radius-sm)',
-          background: 'var(--accent-gradient)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 2px 8px rgba(56, 189, 248, 0.25)'
-        }}>
-          <Zap size={20} color="#fff" />
-        </div>
-        <div>
-          <h1 style={{ fontSize: '1.05rem', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text-main)' }}>
-            API<span style={{ color: 'var(--accent-cyan)' }}>Forge</span>
-          </h1>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '-2px' }}>
-            Behavior Verification
-          </p>
-        </div>
+        <Zap size={16} color="var(--accent-cyan)" aria-hidden="true" />
+        <span style={{ fontSize: '1.05rem', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text-main)' }}>
+          APIForge
+        </span>
       </div>
 
       {/* Navigation Links */}
@@ -74,8 +52,8 @@ export default function Sidebar({
                 padding: '0.6rem 0.75rem',
                 borderRadius: 'var(--radius-sm)',
                 border: '1px solid',
-                borderColor: isActive ? 'var(--border-active)' : 'transparent',
-                background: isActive ? 'var(--bg-card)' : 'transparent',
+                borderColor: isActive ? 'var(--accent-border)' : 'transparent',
+                background: isActive ? 'var(--accent-surface)' : 'transparent',
                 color: isActive ? 'var(--accent-cyan)' : 'var(--text-muted)',
                 cursor: 'pointer',
                 fontFamily: 'inherit',
@@ -91,7 +69,7 @@ export default function Sidebar({
               </div>
               {item.badge && (
                 <span style={{
-                  background: 'rgba(56, 189, 248, 0.15)',
+                  background: 'var(--accent-surface)',
                   color: 'var(--accent-cyan)',
                   padding: '0.1rem 0.5rem',
                   borderRadius: '999px',
@@ -106,42 +84,32 @@ export default function Sidebar({
         })}
       </nav>
 
-      {/* Footer info */}
+      {/* Footer */}
       <div style={{
         padding: '1rem',
         borderTop: '1px solid var(--border-subtle)',
         fontSize: '0.75rem',
-        color: 'var(--text-muted)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '0.6rem'
+        color: 'var(--text-dim)'
       }}>
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(234, 88, 12, 0.08))',
-          border: '1px solid rgba(245, 158, 11, 0.3)',
-          borderRadius: 'var(--radius-sm)',
-          padding: '0.55rem 0.65rem',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '0.2rem'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--color-warn)', fontWeight: 600, fontSize: '0.75rem' }}>
-            <span>🏆</span>
-            <span>Hacktoberfest Track Winner</span>
-          </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-main)', fontWeight: 500 }}>
-            Best Use of Gemma 4
-          </div>
-        </div>
-
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span>AI Engine</span>
-          <span style={{ color: 'var(--accent-cyan)', fontWeight: 600 }}>{engineName}</span>
+          <span>Local workspace</span>
+          <span>v1.2.0</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span>Version</span>
-          <span style={{ color: 'var(--text-muted)' }}>v1.0.0</span>
-        </div>
+        {activeModel && (
+          <div
+            title={activeModel}
+            style={{
+              marginTop: '0.4rem',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.75rem',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}
+          >
+            {activeModel}
+          </div>
+        )}
       </div>
     </aside>
   );

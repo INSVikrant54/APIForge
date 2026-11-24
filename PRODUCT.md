@@ -39,7 +39,7 @@ Deterministic adversarial verification: Flexible multi-model AI synthesis (defau
 
 - Product Name: **APIForge** ⚡
 - Voice & Tone: Precision developer workbench, authoritative, security-conscious, direct, and technical.
-- Visual Language: Dark console aesthetic (Charcoal `#0B0F19`, Slate `#1E293B`, Electric Cyan `#06B6D4` accents, crisp monospace code blocks, Lucide React icons).
+- Visual Language: Dark console aesthetic (Cold Slate `#1c1c1c`/`#212121`/`#242424`, Molten Ember `#ff6c37` accents, crisp monospace code blocks, Lucide React icons).
 
 ## Evidence on Hand
 

@@ -55,11 +55,17 @@ export default function App() {
 
   // Test Suite & Execution state
   const [testSuite, setTestSuite] = useState(null);
+  const [customRequestStarted, setCustomRequestStarted] = useState(false);
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem('apiforge_theme');
+    return saved === 'light' ? 'light' : 'dark';
+  });
   const [results, setResults] = useState(null);
   const [summary, setSummary] = useState(null);
   const [loadingPlan, setLoadingPlan] = useState(false);
   const [runningTests, setRunningTests] = useState(false);
   const [planError, setPlanError] = useState(null);
+  const [banner, setBanner] = useState(null);
 
   // Modal states
   const [inspectingFailure, setInspectingFailure] = useState(null); // { test, result }
@@ -71,6 +77,11 @@ export default function App() {
   const [recentRuns, setRecentRuns] = useState([]);
 
   // Load health, demo mode, and local history on mount
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem('apiforge_theme', theme);
+  }, [theme]);
+
   useEffect(() => {
     fetchHealth()
       .then(setHealth)
@@ -87,6 +98,50 @@ export default function App() {
       // Ignore local storage parse error
     }
   }, []);
+
+  // Modal containment: keep keyboard focus inside the open dialog, lock page
+  // scroll, and return focus to the trigger when it closes.
+  const anyModalOpen = apiKeyModalOpen || Boolean(inspectingFailure) || (exportModalOpen && Boolean(testSuite));
+
+  useEffect(() => {
+    if (!anyModalOpen) return undefined;
+
+    const previouslyFocused = document.activeElement;
+    const dialog = document.querySelector('[role="dialog"]');
+    const getFocusable = () => Array.from(
+      dialog?.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])') || []
+    ).filter(element => element.offsetParent !== null);
+
+    const firstFocusable = getFocusable()[0];
+    if (firstFocusable) firstFocusable.focus();
+
+    const handleKeyDown = (event) => {
+      if (event.key !== 'Tab') return;
+      const items = getFocusable();
+      if (items.length === 0) return;
+      const firstItem = items[0];
+      const lastItem = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === firstItem) {
+        event.preventDefault();
+        lastItem.focus();
+      } else if (!event.shiftKey && document.activeElement === lastItem) {
+        event.preventDefault();
+        firstItem.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      if (previouslyFocused && typeof previouslyFocused.focus === 'function') {
+        previouslyFocused.focus();
+      }
+    };
+  }, [anyModalOpen]);
 
   const handleSaveAiSettings = (newSettings) => {
     setAiSettings(newSettings);
@@ -124,7 +179,7 @@ export default function App() {
       const res = await setDemoMode(newMode);
       setDemoModeState(res);
     } catch (err) {
-      alert(`Failed to switch demo mode: ${err.message}`);
+      setBanner({ message: `Could not switch demo mode: ${err.message}. Check that the API server is running, then try again.` });
     }
   };
 
@@ -132,6 +187,7 @@ export default function App() {
   const handleGeneratePlan = async () => {
     setLoadingPlan(true);
     setPlanError(null);
+    setBanner(null);
     setResults(null);
     setSummary(null);
 
@@ -179,6 +235,7 @@ export default function App() {
         useOfflineDemo: shouldFallbackOffline
       }, aiSettings);
       setTestSuite(plan);
+      setCustomRequestStarted(false);
       setCurrentTab('lab');
     } catch (err) {
       setPlanError(err.message);
@@ -220,6 +277,7 @@ export default function App() {
   const handleRunSelected = async () => {
     if (!testSuite) return;
     setRunningTests(true);
+    setBanner(null);
 
     try {
       const runnerRes = await runTestsApi({
@@ -232,7 +290,7 @@ export default function App() {
       setResults(runnerRes.results);
       recordRunToHistory(testSuite, runnerRes.summary, runnerRes.results);
     } catch (err) {
-      alert(`Execution failed: ${err.message}`);
+      setBanner({ message: `Execution failed: ${err.message}. The backend runner did not respond — confirm the API server is up and retry.` });
     } finally {
       setRunningTests(false);
     }
@@ -253,8 +311,13 @@ export default function App() {
         const filtered = (prev || []).filter(r => r.id !== test.id);
         return [...filtered, singleResult];
       });
+      setInspectingFailure(prev =>
+        prev?.test.id === test.id
+          ? { ...prev, test: { ...prev.test, ...test }, result: singleResult }
+          : prev
+      );
     } catch (err) {
-      alert(`Test execution failed: ${err.message}`);
+      setBanner({ message: `Test execution failed: ${err.message}. Confirm the backend runner is running and try again.` });
     } finally {
       setRunningTests(false);
     }
@@ -277,7 +340,7 @@ export default function App() {
       }, aiSettings);
       setFailureExplanation(explanation);
     } catch (err) {
-      alert(`Could not generate AI failure explanation: ${err.message}`);
+      setBanner({ message: `Could not generate an AI explanation: ${err.message}. The failure details and cURL above remain available.` });
     } finally {
       setExplainingFailure(false);
     }
@@ -289,9 +352,24 @@ export default function App() {
       summary: `Restored from session history (${new Date(run.timestamp).toLocaleTimeString()})`,
       tests: run.tests
     });
+    if (run.path) {
+      setConfig(prev => ({ ...prev, path: run.path }));
+    }
     setSummary(run.summary);
     setResults(run.results);
     setCurrentTab('lab');
+  };
+
+  const handleBackToStart = () => {
+    setTestSuite(null);
+    setResults(null);
+    setSummary(null);
+    setCustomRequestStarted(false);
+    setPlanError(null);
+    setBanner(null);
+    setInspectingFailure(null);
+    setFailureExplanation(null);
+    setExportModalOpen(false);
   };
 
   const handleClearRuns = () => {
@@ -320,42 +398,89 @@ export default function App() {
           onToggleDemoMode={handleToggleDemoMode}
           onLoadDemo={handleLoadDemo}
           loading={loadingPlan || runningTests}
+          customRequestActive={customRequestStarted}
+          theme={theme}
+          onChangeTheme={setTheme}
+          showBack={!(!testSuite && !customRequestStarted) && currentTab === 'lab'}
+          onBack={handleBackToStart}
         />
+
+        {banner && (
+          <div className="app-banner" role="alert">
+            <span>{banner.message}</span>
+            <button type="button" onClick={() => setBanner(null)} aria-label="Dismiss message">
+              Dismiss
+            </button>
+          </div>
+        )}
 
         {/* Tab Content */}
         <main className="main-content">
           {currentTab === 'lab' && (
-            <>
-              {/* Left Column: API Configuration & Business Rules */}
-              <div className="panel-left">
-                <ConfigPanel
-                  config={config}
-                  onChangeConfig={setConfig}
-                  onGeneratePlan={handleGeneratePlan}
-                  loading={loadingPlan}
-                  error={planError}
-                  activeModel={aiSettings?.model || health?.model || 'gemini-3.5-flash-lite'}
-                />
-              </div>
+            (!testSuite && !customRequestStarted) ? (
+              <div className="start-workspace">
+                <section className="start-copy">
+                  <p className="start-kicker">API behavior check</p>
+                  <h1>Find out how your API really behaves.</h1>
+                  <p>
+                    Generate edge-case tests, run them against your endpoint, and inspect any failure.
+                  </p>
+                  <div className="start-actions">
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={handleLoadDemo}
+                      disabled={loadingPlan}
+                    >
+                      {loadingPlan ? 'Preparing demo…' : 'Run the demo'}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => {
+                        setConfig(prev => ({ ...prev, path: '' }));
+                        setCustomRequestStarted(true);
+                      }}
+                    >
+                      Test my API
+                    </button>
+                  </div>
+                </section>
 
-              {/* Right Column: Test Suite Review & Execution Console */}
-              <div className="panel-right">
-                <TestSuitePanel
-                  testSuite={testSuite}
-                  results={results}
-                  summary={summary}
-                  onToggleSelect={handleToggleSelect}
-                  onSelectAll={handleSelectAll}
-                  onDeselectAll={handleDeselectAll}
-                  onUpdateTest={handleUpdateTest}
-                  onRunSelected={handleRunSelected}
-                  onRunSingle={handleRunSingle}
-                  onInspectFailure={handleInspectFailure}
-                  onOpenExport={() => setExportModalOpen(true)}
-                  running={runningTests}
-                />
+                {planError && <div className="start-error">{planError}</div>}
               </div>
-            </>
+            ) : (
+              <>
+                <div className="panel-left">
+                  <ConfigPanel
+                    config={config}
+                    onChangeConfig={setConfig}
+                    onGeneratePlan={handleGeneratePlan}
+                    loading={loadingPlan}
+                    error={planError}
+                    activeModel={aiSettings?.model || health?.model || 'gemini-3.5-flash-lite'}
+                  />
+                </div>
+
+                <div className="panel-right">
+                  <TestSuitePanel
+                    testSuite={testSuite}
+                    results={results}
+                    summary={summary}
+                    targetPath={config.path}
+                    onToggleSelect={handleToggleSelect}
+                    onSelectAll={handleSelectAll}
+                    onDeselectAll={handleDeselectAll}
+                    onUpdateTest={handleUpdateTest}
+                    onRunSelected={handleRunSelected}
+                    onRunSingle={handleRunSingle}
+                    onInspectFailure={handleInspectFailure}
+                    onOpenExport={() => setExportModalOpen(true)}
+                    running={runningTests}
+                  />
+                </div>
+              </>
+            )
           )}
 
           {currentTab === 'history' && (
