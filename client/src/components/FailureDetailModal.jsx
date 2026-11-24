@@ -4,8 +4,6 @@ import {
   AlertTriangle,
   Copy,
   Check,
-  Sparkles,
-  Code2,
   Cpu,
   Clock,
   Terminal,
@@ -39,6 +37,8 @@ export default function FailureDetailModal({
 
   if (!test || !result) return null;
 
+  const isError = result.status === 'ERROR';
+
   const handleCopyCurl = () => {
     if (result.curl) {
       navigator.clipboard.writeText(result.curl);
@@ -63,8 +63,7 @@ export default function FailureDetailModal({
         left: 0,
         width: '100vw',
         height: '100vh',
-        backgroundColor: 'rgba(3, 7, 18, 0.8)',
-        backdropFilter: 'blur(6px)',
+        backgroundColor: 'var(--overlay)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -80,13 +79,13 @@ export default function FailureDetailModal({
         onClick={(e) => e.stopPropagation()}
         style={{
           background: 'var(--bg-card)',
-          border: '1px solid var(--border-fail)',
+          border: `1px solid ${isError ? 'var(--border-warn)' : 'var(--border-fail)'}`,
           borderRadius: 'var(--radius-lg)',
           width: '100%',
           maxWidth: '840px',
           maxHeight: '90vh',
           overflowY: 'auto',
-          boxShadow: '0 10px 40px rgba(0,0,0,0.6)',
+          boxShadow: '0 12px 32px rgba(0,0,0,0.32)',
           display: 'flex',
           flexDirection: 'column'
         }}
@@ -98,26 +97,28 @@ export default function FailureDetailModal({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          background: 'rgba(244, 63, 94, 0.05)'
+          background: isError ? 'var(--bg-warn)' : 'var(--bg-fail)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
             <div style={{
               width: '32px',
               height: '32px',
               borderRadius: 'var(--radius-sm)',
-              background: 'var(--bg-fail)',
+              background: isError ? 'var(--bg-warn)' : 'var(--bg-fail)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <AlertTriangle size={18} color="var(--color-fail)" />
+              <AlertTriangle size={18} color={isError ? 'var(--color-warn)' : 'var(--color-fail)'} />
             </div>
             <div>
               <h3 id="failure-dialog-title" style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                Failure Analysis: {test.name}
+                {isError ? 'Could not run' : 'Test failed'}: {test.name}
               </h3>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                Reproducible discrepancy between confirmed contract and actual backend behavior
+                {isError
+                  ? 'The request never completed, so no assertion was evaluated.'
+                  : 'The endpoint did not match the expected result.'}
               </p>
             </div>
           </div>
@@ -140,8 +141,7 @@ export default function FailureDetailModal({
               >
                 {runningTests ? (
                   <>
-                    <span className="pulse-dot" style={{ backgroundColor: 'var(--accent-cyan)' }} />
-                    <span>Re-testing...</span>
+                    <span>Re-testing…</span>
                   </>
                 ) : (
                   <>
@@ -174,7 +174,7 @@ export default function FailureDetailModal({
         {/* Modal Body */}
         <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
           
-          {/* Quick Metrics Bar */}
+          {/* Result Summary */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(3, 1fr)',
@@ -185,15 +185,15 @@ export default function FailureDetailModal({
             padding: '0.75rem 1rem'
           }}>
             <div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 600 }}>EXPECTED STATUS</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 600 }}>EXPECTED</div>
               <div style={{ fontSize: '1rem', fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--accent-cyan)' }}>
                 HTTP {test.expected?.statusCodes?.join(', ') || 400}
               </div>
             </div>
             <div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 600 }}>ACTUAL STATUS</div>
-              <div style={{ fontSize: '1rem', fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--color-fail)' }}>
-                HTTP {result.actual?.status} {result.actual?.statusText || ''}
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 600 }}>ACTUAL</div>
+              <div style={{ fontSize: '1rem', fontWeight: 700, fontFamily: 'var(--font-mono)', color: isError ? 'var(--color-warn)' : 'var(--color-fail)' }}>
+                {isError ? 'No response' : `HTTP ${result.actual?.status} ${result.actual?.statusText || ''}`}
               </div>
             </div>
             <div>
@@ -212,18 +212,20 @@ export default function FailureDetailModal({
             </div>
           </div>
 
-          {/* Failed Assertion Callout */}
+          {/* What happened */}
           <div style={{
-            background: 'var(--bg-fail)',
-            border: '1px solid var(--border-fail)',
+            background: isError ? 'var(--bg-warn)' : 'var(--bg-fail)',
+            border: `1px solid ${isError ? 'var(--border-warn)' : 'var(--border-fail)'}`,
             borderRadius: 'var(--radius-sm)',
             padding: '0.85rem 1rem'
           }}>
-            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-fail)', textTransform: 'uppercase', marginBottom: '0.2rem' }}>
-              Observed Discrepancy
+            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: isError ? 'var(--color-warn)' : 'var(--color-fail)', textTransform: 'uppercase', marginBottom: '0.2rem' }}>
+              What happened
             </div>
-            <div id="failure-dialog-desc" style={{ fontSize: '0.85rem', color: '#fecdd3' }}>
-              {result.failureReason || `Expected HTTP status ${test.expected?.statusCodes?.join('/')}, but endpoint responded with ${result.actual?.status}`}
+            <div id="failure-dialog-desc" style={{ fontSize: '0.85rem', color: 'var(--text-main)' }}>
+              {result.failureReason
+                || result.error
+                || `Expected HTTP status ${test.expected?.statusCodes?.join('/')}, but the endpoint responded with ${result.actual?.status}.`}
             </div>
           </div>
 
@@ -247,8 +249,8 @@ export default function FailureDetailModal({
               <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.35rem' }}>
                 Actual Response Body
               </div>
-              <pre className="code-block" style={{ maxHeight: '240px', color: '#fca5a5' }}>
-                {JSON.stringify(result.actual?.body, null, 2)}
+              <pre className="code-block" style={{ maxHeight: '240px', color: isError ? 'var(--color-warn)' : 'var(--color-fail)' }}>
+                {result.actual?.body != null ? JSON.stringify(result.actual.body, null, 2) : '// No response body'}
               </pre>
             </div>
           </div>
@@ -275,10 +277,10 @@ export default function FailureDetailModal({
             </pre>
           </div>
 
-          {/* AI Remediation Suggestion Section */}
+          {/* Optional Suggested Fix */}
           <div style={{
-            background: 'rgba(99, 102, 241, 0.08)',
-            border: '1px solid rgba(99, 102, 241, 0.3)',
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-subtle)',
             borderRadius: 'var(--radius-sm)',
             padding: '1.25rem'
           }}>
@@ -286,7 +288,7 @@ export default function FailureDetailModal({
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Cpu size={16} color="var(--accent-cyan)" />
                 <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                  AI Failure Diagnosis & Fix Recommendation
+                  Suggested fix
                 </h4>
               </div>
 
@@ -296,17 +298,15 @@ export default function FailureDetailModal({
                   onClick={() => onExplainFailure(test, result)}
                   disabled={explaining}
                   className="btn btn-primary btn-sm"
-                  style={{ background: 'linear-gradient(135deg, #6366f1 0%, #38bdf8 100%)' }}
                 >
                   {explaining ? (
                     <>
-                      <span className="pulse-dot" style={{ backgroundColor: '#fff' }} />
-                      <span>Consulting {activeModel}...</span>
+                      <span>Explaining…</span>
                     </>
                   ) : (
                     <>
-                      <Sparkles size={13} />
-                      <span>Generate Fix Suggestion</span>
+                      <Cpu size={13} />
+                      <span>Explain failure</span>
                     </>
                   )}
                 </button>
@@ -316,7 +316,7 @@ export default function FailureDetailModal({
             {explanation ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.82rem' }}>
                 <div style={{ color: 'var(--text-main)' }}>
-                  <strong style={{ color: 'var(--accent-cyan)' }}>Remediation Guidance: </strong>
+                  <strong style={{ color: 'var(--text-main)' }}>Suggested change: </strong>
                   {explanation.recommendedFix}
                 </div>
 
@@ -346,7 +346,7 @@ export default function FailureDetailModal({
               </div>
             ) : (
               <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                Click "Generate Fix Suggestion" to have {activeModel} analyze this failure against the configured business rules and provide concrete server-side code remediation snippets.
+                Use {activeModel} to explain this failure and suggest a fix based on the configured expected behavior.
               </p>
             )}
           </div>

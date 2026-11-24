@@ -1,38 +1,62 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-31T05:50:00.000Z",
+  "generatedAt": "2026-11-24T15:21:09.302Z",
   "title": "Design System: APIForge",
   "extensions": {
     "colorMeta": {
       "primary": {
         "role": "primary",
-        "displayName": "Electric Beacon Cyan",
-        "canonical": "#38bdf8",
-        "tonalRamp": ["#082f49", "#0c4a6e", "#0369a1", "#0284c7", "#0ea5e9", "#38bdf8", "#7dd3fc", "#bae6fd"]
-      },
-      "primary-gradient-end": {
-        "role": "primary",
-        "displayName": "Beacon Indigo",
-        "canonical": "#6366f1",
-        "tonalRamp": ["#1e1b4b", "#312e81", "#3730a3", "#4338ca", "#4f46e5", "#6366f1", "#818cf8", "#a5b4fc"]
+        "displayName": "Molten Ember",
+        "canonical": "#ff6c37",
+        "tonalRamp": ["#2b0e03", "#5c1f06", "#8a320a", "#bf4a11", "#e05e1f", "#ff6c37", "#ff9066", "#ffb896"]
       },
       "neutral-bg": {
         "role": "neutral",
-        "displayName": "Obsidian Void",
-        "canonical": "#060911",
-        "tonalRamp": ["#020408", "#060911", "#0b1120", "#10192e", "#1a263d", "#2a3b5c", "#64748b", "#94a3b8"]
+        "displayName": "Cold Slate Chassis",
+        "canonical": "#1c1c1c",
+        "tonalRamp": ["#050505", "#101010", "#1c1c1c", "#212121", "#242424", "#2d2d2d", "#464646", "#787878"]
       },
       "neutral-surface": {
         "role": "neutral",
-        "displayName": "Surface Slate",
-        "canonical": "#0b1120",
-        "tonalRamp": ["#04070d", "#080e19", "#0b1120", "#131b2e", "#1f2b45", "#304163", "#495d85", "#7084ab"]
+        "displayName": "Cold Slate Rail",
+        "canonical": "#212121",
+        "tonalRamp": ["#0b0b0b", "#151515", "#1c1c1c", "#212121", "#292929", "#333333", "#4d4d4d", "#7f7f7f"]
       },
       "neutral-card": {
         "role": "neutral",
-        "displayName": "Deep Card Navy",
-        "canonical": "#10192e",
-        "tonalRamp": ["#070a14", "#0b1120", "#10192e", "#17233f", "#203053", "#2c406c", "#415b94", "#617db7"]
+        "displayName": "Cold Slate Card",
+        "canonical": "#242424",
+        "tonalRamp": ["#0e0e0e", "#171717", "#1e1e1e", "#242424", "#2d2d2d", "#383838", "#525252", "#858585"]
+      },
+      "neutral-card-hover": {
+        "role": "neutral",
+        "displayName": "Cold Slate Card Lift",
+        "canonical": "#2d2d2d",
+        "tonalRamp": ["#131313", "#1b1b1b", "#242424", "#2d2d2d", "#363636", "#424242", "#5c5c5c", "#8f8f8f"]
+      },
+      "neutral-input": {
+        "role": "neutral",
+        "displayName": "Recessed Well",
+        "canonical": "#161616",
+        "tonalRamp": ["#040404", "#0d0d0d", "#161616", "#1c1c1c", "#242424", "#2d2d2d", "#464646", "#787878"]
+      },
+      "border-subtle": {
+        "role": "neutral",
+        "displayName": "Hairline Gunmetal",
+        "canonical": "#353535",
+        "tonalRamp": ["#101010", "#1c1c1c", "#282828", "#353535", "#444444", "#4a4a4a", "#666666", "#909090"]
+      },
+      "text-main": {
+        "role": "neutral",
+        "displayName": "Primary Ink",
+        "canonical": "#f2f2f2",
+        "tonalRamp": ["#949494", "#8a8a8a", "#9e9e9e", "#a6a6a6", "#c2c2c2", "#d8d8d8", "#e8e8e8", "#f2f2f2"]
+      },
+      "method-patch": {
+        "role": "semantic-method",
+        "displayName": "Method Violet",
+        "canonical": "#a855f7",
+        "tonalRamp": ["#3b0764", "#581c87", "#6b21a8", "#7e22ce", "#9333ea", "#a855f7", "#c084fc", "#d8b4fe"]
       },
       "status-pass": {
         "role": "semantic-pass",
@@ -54,33 +78,23 @@
       }
     },
     "typographyMeta": {
-      "display": { "displayName": "Display", "purpose": "Hero brand titles and major modal headings." },
-      "headline": { "displayName": "Headline", "purpose": "Top navigation title and section headers." },
-      "title": { "displayName": "Title", "purpose": "Panel headers and test case card names." },
-      "body": { "displayName": "Body", "purpose": "Standard explanatory copy and documentation." },
-      "label": { "displayName": "Label", "purpose": "Form field labels, chips, and button text." },
+      "display": { "displayName": "Display", "purpose": "Start-workspace hero headline only." },
+      "headline": { "displayName": "Headline", "purpose": "Section headings and large panel titles." },
+      "title": { "displayName": "Title", "purpose": "Card titles and test case names." },
+      "body": { "displayName": "Body", "purpose": "Standard explanatory copy and UI prose." },
+      "label": { "displayName": "Label", "purpose": "Form labels, status badges, kickers, chips." },
       "code": { "displayName": "Monospace Code", "purpose": "Endpoints, JSON bodies, cURLs, and assertions." }
     },
     "shadows": [
       {
-        "name": "primary-button-glow",
-        "value": "0 2px 10px rgba(56, 189, 248, 0.25)",
-        "purpose": "Subtle luminous aura on primary action buttons."
-      },
-      {
-        "name": "primary-button-hover",
-        "value": "0 4px 14px rgba(56, 189, 248, 0.35)",
-        "purpose": "Elevated cyan glow on primary button hover."
-      },
-      {
         "name": "focus-ring-glow",
-        "value": "0 0 0 2px rgba(56, 189, 248, 0.27)",
-        "purpose": "High-visibility focus ring on inputs and controls."
+        "value": "0 0 0 2px rgba(255, 108, 55, 0.16)",
+        "purpose": "Molten Ember focus ring on inputs and controls; the only glow in the resting UI."
       },
       {
         "name": "modal-elevation",
-        "value": "0 20px 40px rgba(0, 0, 0, 0.6)",
-        "purpose": "High-depth shadow for dialog backdrops."
+        "value": "0 12px 32px rgba(0, 0, 0, 0.32)",
+        "purpose": "Structural lift for dialog panels over the --overlay backdrop."
       }
     ],
     "motion": [
@@ -93,10 +107,16 @@
         "name": "spin-indicator",
         "value": "spin 1s linear infinite",
         "purpose": "Loading spinner rotation."
+      },
+      {
+        "name": "reduced-motion-fallback",
+        "value": "0.05s !important",
+        "purpose": "prefers-reduced-motion override that neutralizes all transitions."
       }
     ],
     "breakpoints": [
-      { "name": "lg", "value": "1024px" }
+      { "name": "lg", "value": "1024px" },
+      { "name": "md", "value": "768px" }
     ]
   },
   "components": [
@@ -104,105 +124,123 @@
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Primary action button for analyzing rules or running test suites.",
+      "description": "Primary action button for running demos, suites, and saves. Flat fill — no glow, no gradient, no lift.",
       "html": "<button class=\"ds-btn-primary\">RUN TEST SUITE</button>",
-      "css": ".ds-btn-primary { background: linear-gradient(135deg, #38bdf8 0%, #6366f1 100%); color: #ffffff; padding: 8px 14px; font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 500; border: none; border-radius: 6px; cursor: pointer; box-shadow: 0 2px 10px rgba(56, 189, 248, 0.25); transition: all 0.15s ease; } .ds-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(56, 189, 248, 0.35); opacity: 0.95; }"
+      "css": ".ds-btn-primary { background: #ff6c37; color: #061018; padding: 8px 14px; font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 500; border: none; border-radius: 6px; cursor: pointer; box-shadow: none; transition: all 0.15s ease; } .ds-btn-primary:hover:not(:disabled) { background: #ff8552; transform: none; box-shadow: none; } .ds-btn-primary:focus-visible { outline: 2px solid #ff6c37; outline-offset: 2px; } .ds-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }"
     },
     {
       "name": "Secondary Button",
       "kind": "button",
       "refersTo": "button-secondary",
-      "description": "Secondary action button for filters, modals, and utilities.",
+      "description": "Neutral secondary action for filters, discards, and modal utilities.",
       "html": "<button class=\"ds-btn-secondary\">DISCARD</button>",
-      "css": ".ds-btn-secondary { background: #0b1120; color: #f1f5f9; border: 1px solid #2a3b5c; padding: 8px 14px; font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 500; border-radius: 6px; cursor: pointer; transition: all 0.15s ease; } .ds-btn-secondary:hover { background: #15223e; border-color: #38bdf8; }"
+      "css": ".ds-btn-secondary { background: #212121; color: #f2f2f2; border: 1px solid #4a4a4a; padding: 8px 14px; font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 500; border-radius: 6px; cursor: pointer; transition: all 0.15s ease; } .ds-btn-secondary:hover:not(:disabled) { background: #2d2d2d; border-color: #ff6c37; } .ds-btn-secondary:focus-visible { outline: 2px solid #ff6c37; outline-offset: 2px; }"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Destructive action carrying a fail-rose tint; semantic color on a control, never decorative.",
+      "html": "<button class=\"ds-btn-danger\">DELETE RUN</button>",
+      "css": ".ds-btn-danger { background: rgba(244, 63, 94, 0.12); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.3); padding: 8px 14px; font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 500; border-radius: 6px; cursor: pointer; transition: all 0.15s ease; } .ds-btn-danger:hover:not(:disabled) { background: rgba(244, 63, 94, 0.2); } .ds-btn-danger:focus-visible { outline: 2px solid #f43f5e; outline-offset: 2px; }"
     },
     {
       "name": "Console Input",
       "kind": "input",
       "refersTo": "input-field",
-      "description": "Recessed monospace input field for API endpoints and variables.",
+      "description": "Recessed endpoint field. Sits darker than its surroundings and takes the Molten Ember focus ring.",
       "html": "<input class=\"ds-input-field\" type=\"text\" value=\"POST /api/demo/orders\" />",
-      "css": ".ds-input-field { background: #080d19; color: #f1f5f9; border: 1px solid #1a263d; border-radius: 6px; padding: 9px 13px; font-family: 'Fira Code', monospace; font-size: 0.85rem; outline: none; width: 100%; box-sizing: border-box; transition: border-color 0.15s ease, box-shadow 0.15s ease; } .ds-input-field:focus { border-color: #38bdf8; box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.27); }"
+      "css": ".ds-input-field { background: #161616; color: #f2f2f2; border: 1px solid #353535; border-radius: 6px; padding: 9px 13px; font-family: 'Fira Code', monospace; font-size: 0.85rem; outline: none; width: 100%; box-sizing: border-box; transition: border-color 0.15s ease, box-shadow 0.15s ease; } .ds-input-field:focus { border-color: #ff6c37; box-shadow: 0 0 0 2px rgba(255, 108, 55, 0.16); }"
     },
     {
       "name": "Status Badge (Pass)",
       "kind": "chip",
       "refersTo": "status-pass",
-      "description": "Deterministic verified passing assertion status.",
-      "html": "<span class=\"ds-badge ds-badge-pass\">PASS</span>",
-      "css": ".ds-badge { display: inline-flex; align-items: center; font-family: 'Inter', sans-serif; font-size: 0.72rem; font-weight: 600; padding: 3px 9px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.04em; } .ds-badge-pass { background: rgba(16, 185, 129, 0.12); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }"
+      "description": "Deterministic verified passing assertion status. The only true pill in the system.",
+      "html": "<span class=\"ds-badge ds-badge-pass\"><span class=\"ds-dot\"></span>PASS</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; gap: 5px; font-family: 'Inter', sans-serif; font-size: 0.72rem; font-weight: 600; padding: 3px 9px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.04em; } .ds-dot { width: 6px; height: 6px; border-radius: 9999px; background: currentColor; } .ds-badge-pass { background: rgba(16, 185, 129, 0.12); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }"
     },
     {
       "name": "Status Badge (Fail)",
       "kind": "chip",
       "refersTo": "status-fail",
       "description": "Deterministic assertion violation status.",
-      "html": "<span class=\"ds-badge ds-badge-fail\">FAIL</span>",
-      "css": ".ds-badge { display: inline-flex; align-items: center; font-family: 'Inter', sans-serif; font-size: 0.72rem; font-weight: 600; padding: 3px 9px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.04em; } .ds-badge-fail { background: rgba(244, 63, 94, 0.12); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.3); }"
+      "html": "<span class=\"ds-badge ds-badge-fail\"><span class=\"ds-dot\"></span>FAIL</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; gap: 5px; font-family: 'Inter', sans-serif; font-size: 0.72rem; font-weight: 600; padding: 3px 9px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.04em; } .ds-dot { width: 6px; height: 6px; border-radius: 9999px; background: currentColor; } .ds-badge-fail { background: rgba(244, 63, 94, 0.12); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.3); }"
     },
     {
-      "name": "Method Badge (POST)",
+      "name": "Method Pill (POST)",
       "kind": "chip",
-      "refersTo": "method-post",
-      "description": "HTTP method indicator pill for POST endpoints.",
+      "refersTo": "method-patch",
+      "description": "HTTP method readout. Square 6px tab — never a round pill. POST borrows the Molten Ember hue.",
       "html": "<span class=\"ds-method ds-method-post\">POST</span>",
-      "css": ".ds-method { font-family: 'Fira Code', monospace; font-size: 0.75rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; } .ds-method-post { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }"
+      "css": ".ds-method { font-family: 'Fira Code', monospace; font-size: 0.75rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; } .ds-method-post { background: rgba(255, 108, 55, 0.12); color: #ff936d; border: 1px solid rgba(255, 108, 55, 0.28); } .ds-method-delete { background: rgba(244, 63, 94, 0.15); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.3); }"
     },
     {
       "name": "Test Case Card",
       "kind": "card",
       "refersTo": "card-container",
-      "description": "Interactive test case card for verification suites.",
-      "html": "<div class=\"ds-card\"><div class=\"ds-card-header\"><span class=\"ds-method ds-method-post\">POST</span><span class=\"ds-card-title\">Reject negative quantity (-5)</span><span class=\"ds-badge ds-badge-pass\">PASS</span></div></div>",
-      "css": ".ds-card { background: #10192e; border: 1px solid #1a263d; border-radius: 10px; padding: 14px 16px; transition: border-color 0.15s ease; font-family: 'Inter', sans-serif; } .ds-card:hover { border-color: #2a3b5c; } .ds-card-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; } .ds-card-title { font-size: 0.88rem; font-weight: 600; color: #f1f5f9; flex: 1; margin: 0; } .ds-method { font-family: 'Fira Code', monospace; font-size: 0.75rem; font-weight: 700; padding: 3px 7px; border-radius: 6px; text-transform: uppercase; background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); } .ds-badge { display: inline-flex; align-items: center; font-size: 0.72rem; font-weight: 600; padding: 3px 9px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.04em; background: rgba(16, 185, 129, 0.12); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }"
+      "description": "Interactive verification card: flat at rest, hairline only, brightening on hover.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-header\"><span class=\"ds-method ds-method-post\">POST</span><span class=\"ds-card-title\">Reject negative quantity (-5)</span><span class=\"ds-badge ds-badge-pass\"><span class=\"ds-dot\"></span>PASS</span></div></div>",
+      "css": ".ds-card { background: #242424; border: 1px solid #353535; border-radius: 10px; padding: 20px; box-shadow: none; transition: border-color 0.15s ease; font-family: 'Inter', sans-serif; } .ds-card:hover { border-color: #4a4a4a; } .ds-card-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; } .ds-card-title { font-size: 0.95rem; font-weight: 600; color: #f2f2f2; flex: 1; } .ds-method { font-family: 'Fira Code', monospace; font-size: 0.75rem; font-weight: 700; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; background: rgba(255, 108, 55, 0.12); color: #ff936d; border: 1px solid rgba(255, 108, 55, 0.28); } .ds-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 0.72rem; font-weight: 600; padding: 3px 9px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.04em; background: rgba(16, 185, 129, 0.12); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }"
+    },
+    {
+      "name": "Sidebar Navigation Item",
+      "kind": "nav",
+      "refersTo": "button-secondary",
+      "description": "Active telemetry nav item: accent tinted surface, never a full accent fill.",
+      "html": "<nav class=\"ds-nav\"><span class=\"ds-nav-item is-active\">Test Lab</span><span class=\"ds-nav-item\">Recent Runs</span></nav>",
+      "css": ".ds-nav { display: flex; flex-direction: column; gap: 4px; width: 240px; background: #212121; border-right: 1px solid #353535; padding: 12px; box-sizing: border-box; font-family: 'Inter', sans-serif; } .ds-nav-item { display: block; padding: 9px 12px; font-size: 0.85rem; font-weight: 500; color: #a6a6a6; background: transparent; border: 1px solid transparent; border-radius: 6px; transition: all 0.15s ease; } .ds-nav-item:hover { color: #f2f2f2; background: #2d2d2d; } .ds-nav-item.is-active { color: #ff6c37; background: rgba(255, 108, 55, 0.1); border-color: rgba(255, 108, 55, 0.3); } .ds-nav-item:focus-visible { outline: 2px solid #ff6c37; outline-offset: 2px; }"
     }
   ],
   "narrative": {
     "northStar": "The Precision Avionics Cockpit",
-    "overview": "APIForge is an engineered verification workbench designed for developers, QA engineers, and security teams testing mission-critical APIs. The interface operates like modern avionics telemetry: high-contrast dark surfaces, crisp monospace data readouts, and surgical electric cyan instrumentation. Every visual element serves diagnostic scanability and actionable triage.\n\nThe aesthetic rejects \"SaaS Bloat\" — no gratuitous purple gradients, washed-out low-contrast gray text, pastel toy badges, or slow decorative animations. Visual noise is treated as a defect. Interactive density is high, with tight structural spacing, clear 1px division boundaries, and unmistakable status cues that distinguish passing contracts from catastrophic failures at a glance.",
+    "overview": "APIForge is an operational instrument, not a marketing surface. The cockpit is dark, matte, and densely legible: a Cold Slate chassis (#1c1c1c -> #212121 -> #242424) stepped in luminance rather than shadow, with a single Molten Ember (#ff6c37) annunciator that fires only when the operator must act or must read a verification payload. Emerald, rose, and amber remain caution and verdict lamps — they mean something or they are not lit.\n\nDensity is a feature. The workbench splits a configuration rail from a results rail and keeps both visible; nothing important hides behind a second navigation layer. Every surface reads at rest — no glow, no gradient, no lift — so that the one element that does change state (a focused input, a selected chip, a pressed primary button) is unambiguous at a glance.\n\nThe system deliberately refuses the purple-SaaS default, pastel illustration palettes, and glassmorphic blur. Depth comes from three flat greys and a 1px hairline; contrast comes from a three-step text ramp; identity comes from one hot accent and the near-absence of everything else.",
     "keyCharacteristics": [
-      "High-contrast dark telemetry theme with stepped obsidian, slate, and navy tiers.",
-      "Surgical cyan accents reserved strictly for primary actions, active indicators, and focus boundaries.",
-      "Dedicated monospace typography for all endpoints, payloads, status codes, and assertions.",
-      "Flat-by-default surfaces utilizing 1px structural hairline borders instead of muddy drop shadows.",
-      "Unambiguous semantic indicators (emerald, rose, amber) dedicated solely to deterministic test verdicts."
+      "Cold Slate chassis: three flat neutral steps separated by 1px hairlines, zero resting shadow.",
+      "Molten Ember (#ff6c37) as the sole brand accent; no gradient partner, no secondary hue.",
+      "Verdict colors are functional only — pass, fail, review, and HTTP method identity.",
+      "Inter for language, Fira Code for anything the machine asserts.",
+      "Compact, tool-like rhythm (14px body, 6px interactive radius, 20px card padding)."
     ],
     "rules": [
       {
         "name": "The Surgical Accent Rule",
-        "body": "Electric Cyan (#38bdf8) is strictly reserved for primary actions, active indicators, and focus rings (≤10% of any viewport). Its rarity creates immediate visual hierarchy.",
+        "body": "Molten Ember (#ff6c37) marks action and state — primary buttons, focused inputs, selected chips and filters, the active navigation item, and the monospace verification surface. It is never used as a background fill, a card, a decorative wash, or neutral chrome.",
         "section": "colors"
       },
       {
         "name": "The Semantic Isolation Rule",
-        "body": "Emerald (#10b981), Rose (#f43f5e), and Amber (#f59e0b) are strictly forbidden for generic decorative elements, neutral buttons, or navigation. They signify deterministic pass, fail, and ambiguity review states only.",
+        "body": "Emerald, rose, amber, and violet appear only where they encode HTTP method identity or a deterministic test verdict. They are forbidden as decoration, on neutral buttons, and in navigation.",
         "section": "colors"
       },
       {
         "name": "The Monospace Verification Rule",
-        "body": "All HTTP paths, payload bodies, status codes, cURL commands, and assertion parameters must render in Fira Code monospace typography to preserve mechanical precision.",
+        "body": "All HTTP paths, payload bodies, status codes, cURL commands, and assertion parameters render in Fira Code. If the machine asserts it, it is monospace.",
         "section": "typography"
       },
       {
         "name": "The Flat-By-Default Rule",
-        "body": "Surfaces are flat at rest. Depth is established through background luminance steps and 1px structural hairline borders. Shadows appear strictly as luminous responses to user focus, hover, or modal dialog elevation.",
+        "body": "Surfaces are flat at rest. A shadow is a statement that something is covering the workbench or receiving focus — never a decorative glow under a button, card, or panel.",
         "section": "elevation"
       }
     ],
     "dos": [
-      "Do strictly limit Electric Cyan (#38bdf8) to primary CTAs, active selections, and focus rings (≤10% of viewport area).",
-      "Do render all HTTP endpoints, JSON bodies, cURL commands, and assertion rules in Fira Code monospace.",
-      "Do use stepped background luminance (#060911 -> #0b1120 -> #10192e) and 1px hairline borders (#1a263d) to convey depth.",
-      "Do provide instant visual feedback on input focus with the 0 0 0 2px rgba(56, 189, 248, 0.27) cyan glow ring.",
-      "Do use uppercase method pills and status badges with dedicated semi-transparent tinted backgrounds."
+      "Do keep Molten Ember (#ff6c37) for primary actions, focus, selection, and the monospace payload surface — action and state only.",
+      "Do build depth from the Cold Slate steps (#1c1c1c -> #212121 -> #242424) and a 1px #353535 hairline.",
+      "Do render endpoints, JSON bodies, cURL commands, and assertion rules in Fira Code.",
+      "Do carry emerald/rose/amber/violet only as HTTP-method or verdict signals, always as the matched fill + text + hairline triple.",
+      "Do keep transitions at 0.15s ease, and honor prefers-reduced-motion.",
+      "Do keep text at or above 4.5:1 against its immediate container; the three-step text ramp exists to be used, not bypassed."
     ],
     "donts": [
-      "Don't use generic purple SaaS gradients or pastel cartoonish colors on neutral components or containers.",
-      "Don't use emerald (#10b981), rose (#f43f5e), or amber (#f59e0b) for decorative UI elements; they are strictly reserved for deterministic pass/fail/review telemetry.",
-      "Don't cast heavy, blurry black drop shadows under cards at rest; keep resting surfaces flat.",
-      "Don't use low-contrast gray text on dark backgrounds; ensure text meets minimum 4.5:1 contrast against its immediate container.",
-      "Don't introduce slow, distracting animations that delay developer workflows; keep transitions under 0.15s ease."
+      "Don't add a gradient partner to Molten Ember — --accent-gradient is none by design; no cyan-to-indigo sweep, no purple SaaS pastels.",
+      "Don't put a glow or drop shadow under resting buttons, cards, or panels.",
+      "Don't use emerald/rose/amber as decoration, or on navigation and neutral buttons.",
+      "Don't render a second brand hue anywhere — blue and indigo have no active role.",
+      "Don't slow transitions past 0.15s ease, and don't animate without a prefers-reduced-motion fallback.",
+      "Don't leave cyan-derived values behind in the light theme: --border-glow, --accent-surface, and --accent-border under [data-theme='light'] must derive from #ff6c37, not #38bdf8 / #0284c7.",
+      "Don't give .method-pill a full pill radius; 9999px is for .status-badge only."
     ]
   }
 }
-

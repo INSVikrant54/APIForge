@@ -186,7 +186,7 @@ Because APIForge executes HTTP requests on behalf of users, strict security meas
 
 ### Frontend
 - **React 18** & **Vite 6**
-- **Vanilla CSS Design System:** Modern dark developer console theme (Charcoal/Navy, electric cyan accents, subtle glassmorphism)
+- **Vanilla CSS Design System:** Dark developer console theme (Cold Slate `#1c1c1c`/`#212121`/`#242424`, Molten Ember `#ff6c37` accent, flat structural elevation, Fira Code verification surfaces)
 - **Lucide React:** Clean developer tool iconography
 - **Native Fetch API:** Streaming and REST communication
 

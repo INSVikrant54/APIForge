@@ -74,8 +74,7 @@ export default function RegressionExportModal({
         left: 0,
         width: '100vw',
         height: '100vh',
-        backgroundColor: 'rgba(3, 7, 18, 0.8)',
-        backdropFilter: 'blur(6px)',
+        backgroundColor: 'var(--overlay)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -95,7 +94,7 @@ export default function RegressionExportModal({
           maxWidth: '800px',
           maxHeight: '90vh',
           overflowY: 'auto',
-          boxShadow: '0 10px 40px rgba(0,0,0,0.6)',
+          boxShadow: '0 12px 32px rgba(0,0,0,0.32)',
           display: 'flex',
           flexDirection: 'column'
         }}

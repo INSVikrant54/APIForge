@@ -1,16 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { History, Play, Trash2, CheckCircle2, XCircle } from 'lucide-react';
 
 export default function RecentRunsView({ runs = [], onLoadRun, onClearRuns }) {
+  const [confirming, setConfirming] = useState(false);
+
   if (runs.length === 0) {
     return (
       <div className="card" style={{ textAlign: 'center', padding: '3.5rem 1.5rem', color: 'var(--text-muted)' }}>
         <History size={40} color="var(--border-active)" style={{ margin: '0 auto 1rem' }} />
         <h3 style={{ fontSize: '1.05rem', color: 'var(--text-main)', marginBottom: '0.4rem' }}>
-          No Test Runs in History
+          No runs yet
         </h3>
         <p style={{ fontSize: '0.85rem', maxWidth: '420px', margin: '0 auto', color: 'var(--text-dim)' }}>
-          Execute test suites in the Test Lab to record runs locally in your session history.
+          Run a test suite to save its results here.
         </p>
       </div>
     );
@@ -21,18 +23,41 @@ export default function RecentRunsView({ runs = [], onLoadRun, onClearRuns }) {
       <div className="card-header">
         <div className="card-title">
           <History size={18} color="var(--accent-cyan)" />
-          <span>Session Test History ({runs.length})</span>
+          <span>Recent runs ({runs.length})</span>
         </div>
-        <button
-          type="button"
-          onClick={onClearRuns}
-          aria-label="Clear all session history runs"
-          className="btn btn-secondary btn-sm"
-          style={{ color: 'var(--color-fail)' }}
-        >
-          <Trash2 size={13} />
-          <span>Clear History</span>
-        </button>
+        {confirming ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Clear all {runs.length} runs?</span>
+            <button
+              type="button"
+              onClick={() => { onClearRuns(); setConfirming(false); }}
+              aria-label="Confirm clear all session history runs"
+              className="btn btn-danger btn-sm"
+            >
+              <Trash2 size={13} />
+              <span>Clear</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirming(false)}
+              aria-label="Cancel clearing history"
+              className="btn btn-secondary btn-sm"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setConfirming(true)}
+            aria-label="Clear all session history runs"
+            className="btn btn-secondary btn-sm"
+            style={{ color: 'var(--color-fail)' }}
+          >
+            <Trash2 size={13} />
+            <span>Clear History</span>
+          </button>
+        )}
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
@@ -56,7 +81,7 @@ export default function RecentRunsView({ runs = [], onLoadRun, onClearRuns }) {
                 {run.suiteName}
               </div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.2rem' }}>
-                Target: {run.path} • {new Date(run.timestamp).toLocaleTimeString()}
+                Target: {run.path} • {new Date(run.timestamp).toLocaleString()}
               </div>
             </div>
 
@@ -76,7 +101,7 @@ export default function RecentRunsView({ runs = [], onLoadRun, onClearRuns }) {
                 aria-label={`Inspect results of ${run.suiteName}`}
                 className="btn btn-secondary btn-sm"
               >
-                <span>Inspect Run</span>
+                <span>Open</span>
               </button>
             </div>
           </div>
