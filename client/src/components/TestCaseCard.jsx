@@ -3,23 +3,23 @@ import {
   ChevronDown,
   ChevronRight,
   CheckCircle2,
+  ArrowRight,
   XCircle,
   AlertTriangle,
   Play,
   Copy,
   Check,
-  Sparkles,
   Info
 } from 'lucide-react';
 
-const CATEGORY_COLORS = {
-  happy_path: { bg: 'rgba(30, 41, 59, 0.7)', text: '#94a3b8', border: 'rgba(51, 65, 85, 0.6)', label: 'Happy Path' },
-  missing_field: { bg: 'rgba(30, 41, 59, 0.7)', text: '#cbd5e1', border: 'rgba(51, 65, 85, 0.6)', label: 'Missing Field' },
-  type_validation: { bg: 'rgba(168, 85, 247, 0.12)', text: '#c084fc', border: 'rgba(168, 85, 247, 0.25)', label: 'Type Validation' },
-  boundary: { bg: 'rgba(56, 189, 248, 0.1)', text: '#38bdf8', border: 'rgba(56, 189, 248, 0.25)', label: 'Boundary' },
-  business_rule: { bg: 'rgba(99, 102, 241, 0.12)', text: '#818cf8', border: 'rgba(99, 102, 241, 0.25)', label: 'Business Rule' },
-  malformed_input: { bg: 'rgba(236, 72, 153, 0.1)', text: '#f472b6', border: 'rgba(236, 72, 153, 0.25)', label: 'Malformed' },
-  inconsistent_data: { bg: 'rgba(251, 146, 60, 0.1)', text: '#fb923c', border: 'rgba(251, 146, 60, 0.25)', label: 'Inconsistent' }
+const CATEGORY_LABELS = {
+  happy_path: 'Happy path',
+  missing_field: 'Missing field',
+  type_validation: 'Type validation',
+  boundary: 'Boundary',
+  business_rule: 'Business rule',
+  malformed_input: 'Malformed input',
+  inconsistent_data: 'Inconsistent data'
 };
 
 function TestCaseCard({
@@ -30,235 +30,209 @@ function TestCaseCard({
   onRunSingle,
   onInspectFailure,
   running,
+  isRunning = false,
   forceExpand
 }) {
   const [expanded, setExpanded] = useState(false);
   const [copiedCurl, setCopiedCurl] = useState(false);
 
-  // Sync with parent Expand/Collapse All state
   React.useEffect(() => {
-    if (typeof forceExpand === 'boolean') {
-      setExpanded(forceExpand);
-    }
+    if (typeof forceExpand === 'boolean') setExpanded(forceExpand);
   }, [forceExpand]);
-
-  const categoryStyle = CATEGORY_COLORS[test.category] || {
-    bg: 'rgba(30, 41, 59, 0.7)',
-    text: '#94a3b8',
-    border: 'rgba(51, 65, 85, 0.6)',
-    label: test.category
-  };
 
   const isPass = result?.status === 'PASS';
   const isFail = result?.status === 'FAIL';
   const isError = result?.status === 'ERROR';
   const isNeedsReview = test.requiresReview && !test.confirmed;
 
-  const handleCopyCurl = (e) => {
-    e.stopPropagation();
+  const handleCopyCurl = (event) => {
+    event?.stopPropagation();
     const curl = result?.curl || `curl -X ${test.request?.method || 'POST'} "${test.request?.path || ''}" -d '${JSON.stringify(test.request?.body || {})}'`;
     navigator.clipboard.writeText(curl);
     setCopiedCurl(true);
-    setTimeout(() => setCopiedCurl(false), 2000);
+    window.setTimeout(() => setCopiedCurl(false), 2000);
   };
+
+  const toggleExpanded = () => setExpanded(value => !value);
 
   return (
     <div
+      aria-busy={isRunning || undefined}
       style={{
         background: 'var(--bg-card)',
         border: '1px solid',
-        borderColor: isFail ? 'var(--border-fail)' : isPass ? 'var(--border-pass)' : 'var(--border-subtle)',
+        borderColor: isError
+          ? 'var(--border-warn)'
+          : isFail
+            ? 'var(--border-fail)'
+            : isPass
+              ? 'var(--border-pass)'
+              : isRunning
+                ? 'var(--accent-border)'
+                : 'var(--border-subtle)',
         borderRadius: 'var(--radius-sm)',
         marginBottom: '0.6rem',
-        overflow: 'hidden',
-        transition: 'all 0.15s ease'
+        overflow: 'hidden'
       }}
     >
-      {/* Main Row / Header */}
       <div
-        role="button"
-        tabIndex={0}
-        aria-expanded={expanded}
-        onClick={() => setExpanded(!expanded)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            setExpanded(!expanded);
-          }
-        }}
         style={{
           padding: '0.75rem 1rem',
-          display: 'flex',
+          display: 'grid',
+          gridTemplateColumns: '15px 16px minmax(0, 1fr) auto',
           alignItems: 'center',
-          gap: '0.75rem',
-          cursor: 'pointer',
-          outline: 'none',
-          transition: 'all 0.15s ease',
-          background: isFail ? 'rgba(244, 63, 94, 0.04)' : isPass ? 'rgba(16, 185, 129, 0.04)' : 'transparent'
+          gap: '0.65rem',
+          background: isError ? 'var(--bg-warn)' : isFail ? 'var(--bg-fail)' : isPass ? 'var(--bg-pass)' : 'transparent'
         }}
-        onFocus={(e) => { e.currentTarget.style.boxShadow = 'inset 0 0 0 1px var(--accent-cyan)'; }}
-        onBlur={(e) => { e.currentTarget.style.boxShadow = 'none'; }}
       >
-        {/* Selection Checkbox */}
         <input
           type="checkbox"
           checked={test.selected !== false}
-          onChange={(e) => {
-            e.stopPropagation();
+          onChange={(event) => {
+            event.stopPropagation();
             onToggleSelect(test.id);
           }}
           disabled={running}
+          aria-label={`Select ${test.name}`}
           style={{ cursor: 'pointer', width: '15px', height: '15px' }}
         />
 
-        {/* Expand / Collapse Icon */}
-        <span style={{ color: '#64748b' }}>
-          {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-        </span>
-
-        {/* Category Pill */}
-        <span
+        <button
+          type="button"
+          onClick={toggleExpanded}
+          aria-expanded={expanded}
+          aria-label={`${expanded ? 'Collapse' : 'Expand'} details for ${test.name}`}
           style={{
-            background: categoryStyle.bg,
-            color: categoryStyle.text,
-            border: `1px solid ${categoryStyle.border || 'var(--border-subtle)'}`,
-            fontSize: '0.72rem',
-            fontWeight: 600,
-            padding: '0.15rem 0.5rem',
-            borderRadius: 'var(--radius-sm)',
-            whiteSpace: 'nowrap'
+            border: 'none',
+            background: 'transparent',
+            color: 'var(--text-dim)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
+            cursor: 'pointer'
           }}
         >
-          {categoryStyle.label}
-        </span>
+          {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+        </button>
 
-        {/* Method, Path, Name & Description Cockpit Readout */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', flexWrap: 'wrap' }}>
-            {/* Method Pill */}
-            <span
-              className={`method-pill method-${(test.request?.method || 'post').toLowerCase()}`}
-              style={{ fontSize: '0.7rem', padding: '0.12rem 0.45rem', borderRadius: 'var(--radius-sm)' }}
-            >
+        <div style={{ minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, flexWrap: 'wrap' }}>
+            <span className={`method-pill method-${(test.request?.method || 'post').toLowerCase()}`}>
               {test.request?.method || 'POST'}
             </span>
-
-            {/* Monospace Path */}
             {test.request?.path && (
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: '#94a3b8' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.76rem', color: 'var(--text-muted)' }}>
                 {test.request.path}
               </span>
             )}
-
-            <span style={{ fontSize: '0.88rem', fontWeight: 600, color: '#f1f5f9' }}>
+            <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-main)' }}>
               {test.name}
             </span>
+          </div>
 
-            {test.requiresReview && !test.confirmed && (
-              <span
-                style={{
-                  background: 'var(--bg-warn)',
-                  color: 'var(--color-warn)',
-                  border: '1px solid var(--border-warn)',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  padding: '0.12rem 0.45rem',
-                  borderRadius: 'var(--radius-sm)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.25rem'
-                }}
-              >
-                <AlertTriangle size={12} />
-                Requires Review
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginTop: '0.2rem', minWidth: 0 }}>
+            <span className="category-chip" style={{ flexShrink: 0 }}>
+              {CATEGORY_LABELS[test.category] || test.category}
+            </span>
+            {test.description && (
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {test.description}
               </span>
             )}
           </div>
-          <div style={{ fontSize: '0.75rem', color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '0.15rem' }}>
-            {test.description}
-          </div>
         </div>
 
-        {/* Execution Status Badge */}
-        <div>
-          {isPass && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.35rem' }} onClick={(event) => event.stopPropagation()}>
+          {isRunning && (
+            <span className="status-badge status-running">
+              <span className="pulse-dot" style={{ background: 'var(--accent-cyan)' }} />
+              Running
+            </span>
+          )}
+          {!isRunning && isPass && (
             <span className="status-badge status-pass">
-              <CheckCircle2 size={13} />
-              PASS ({result.durationMs}ms)
+              <CheckCircle2 size={13} /> Pass · {result.durationMs}ms
             </span>
           )}
-          {isFail && (
-            <span className="status-badge status-fail">
-              <XCircle size={13} />
-              FAIL ({result.durationMs}ms)
+          {!isRunning && isFail && (
+            <>
+              <span className="status-badge status-fail">
+                <XCircle size={13} /> Fail · {result.durationMs}ms
+              </span>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onInspectFailure(test, result);
+                }}
+                className="btn btn-sm btn-danger inspect-button"
+                aria-label={`Inspect failure: ${test.name}`}
+              >
+                <XCircle size={12} /> Inspect failure <ArrowRight size={12} />
+              </button>
+            </>
+          )}
+          {!isRunning && isError && (
+            <>
+              <span className="status-badge status-warn">
+                <AlertTriangle size={13} /> Could not run · {result.durationMs}ms
+              </span>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onInspectFailure(test, result);
+                }}
+                className="btn btn-sm btn-secondary"
+                style={{ borderColor: 'var(--border-warn)', color: 'var(--color-warn)' }}
+                aria-label={`Inspect execution error: ${test.name}`}
+              >
+                Inspect error <ArrowRight size={12} />
+              </button>
+            </>
+          )}
+          {!isRunning && isNeedsReview && (
+            <span className="status-badge status-warn">
+              <AlertTriangle size={12} /> Confirm
             </span>
           )}
-          {isError && (
-            <span className="status-badge status-fail">
-              <AlertTriangle size={13} />
-              ERROR
+          {!isRunning && !result && !isNeedsReview && (
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>
+              Not run
             </span>
           )}
-          {!result && (
-            <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 500 }}>
-              Expected: HTTP {test.expected?.statusCodes?.join('/') || 200}
-            </span>
-          )}
-        </div>
-
-        {/* Action Buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }} onClick={(e) => e.stopPropagation()}>
-          {/* Quick cURL Copy in Collapsed State */}
-          <button
-            onClick={handleCopyCurl}
-            className="btn btn-secondary btn-sm"
-            style={{ padding: '0.22rem 0.5rem', fontSize: '0.72rem' }}
-            title="Copy sanitized reproduction cURL"
-          >
-            {copiedCurl ? <Check size={12} color="var(--color-pass)" /> : <Copy size={12} />}
-            <span style={{ fontSize: '0.7rem' }}>cURL</span>
-          </button>
-
-          {isFail && (
+          {!isRunning && !isFail && !isError && (
             <button
-              onClick={() => onInspectFailure(test, result)}
-              className="btn btn-sm btn-danger"
-              style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem' }}
+              type="button"
+              onClick={() => onRunSingle(test)}
+              disabled={running || isNeedsReview}
+              className="btn btn-secondary btn-sm"
+              title="Run this test"
             >
-              Inspect Bug
+              <Play size={12} />
+              <span>Run</span>
             </button>
           )}
-
-          <button
-            onClick={() => onRunSingle(test)}
-            disabled={running || isNeedsReview}
-            className="btn btn-secondary btn-sm"
-            style={{ padding: '0.25rem 0.5rem' }}
-            title="Execute this test individually"
-          >
-            <Play size={12} color="#38bdf8" />
-          </button>
         </div>
       </div>
 
-      {/* Expanded Details Panel */}
       {expanded && (
         <div style={{
           padding: '1rem',
           borderTop: '1px solid var(--border-subtle)',
-          background: '#070b14',
+          background: 'var(--bg-surface)',
           display: 'flex',
           flexDirection: 'column',
           gap: '0.75rem',
           fontSize: '0.8rem'
         }}>
-          {/* Rationale & Review Confirmation */}
           {test.rationale && (
-            <div style={{ display: 'flex', gap: '0.5rem', color: '#94a3b8' }}>
-              <Info size={15} color="#38bdf8" style={{ flexShrink: 0, marginTop: '2px' }} />
-              <div>
-                <strong style={{ color: '#f1f5f9' }}>Scenario Rationale:</strong> {test.rationale}
-              </div>
+            <div style={{ display: 'flex', gap: '0.5rem', color: 'var(--text-muted)' }}>
+              <Info size={15} color="var(--accent-cyan)" style={{ flexShrink: 0, marginTop: '2px' }} />
+              <div><strong style={{ color: 'var(--text-main)' }}>Why this test: </strong>{test.rationale}</div>
             </div>
           )}
 
@@ -266,30 +240,29 @@ function TestCaseCard({
             <div style={{
               background: 'var(--bg-warn)',
               border: '1px solid var(--border-warn)',
-              padding: '0.6rem 0.8rem',
-              borderRadius: '6px',
+              padding: '0.65rem 0.8rem',
+              borderRadius: 'var(--radius-sm)',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between'
+              justifyContent: 'space-between',
+              gap: '0.75rem'
             }}>
-              <span style={{ color: 'var(--color-warn)' }}>
-                ⚠️ Contract behavior is ambiguous. Please confirm expected response before executing.
-              </span>
+              <span style={{ color: 'var(--color-warn)' }}>Confirm the expected behavior before running this test.</span>
               <button
+                type="button"
                 onClick={() => onUpdateTest(test.id, { confirmed: !test.confirmed })}
                 className="btn btn-sm btn-secondary"
-                style={{ borderColor: 'var(--color-warn)', color: 'var(--color-warn)' }}
+                style={{ borderColor: 'var(--border-warn)', color: 'var(--color-warn)', flexShrink: 0 }}
               >
-                {test.confirmed ? 'Confirmed ✓' : 'Confirm Expectation'}
+                {test.confirmed ? 'Confirmed' : 'Confirm'}
               </button>
             </div>
           )}
 
-          {/* Side by side: Request Payload vs Expected Assertions */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }} className="test-detail-grid">
             <div>
-              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', marginBottom: '0.3rem' }}>
-                Request Input ({test.request?.method} {test.request?.path})
+              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.3rem' }}>
+                Request
               </div>
               <pre className="code-block" style={{ maxHeight: '160px' }}>
                 {JSON.stringify(test.request?.body, null, 2) || '// No request body'}
@@ -297,52 +270,57 @@ function TestCaseCard({
             </div>
 
             <div>
-              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', marginBottom: '0.3rem' }}>
-                Expected Assertions
+              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.3rem' }}>
+                Expected
               </div>
-              <div style={{ background: '#040711', border: '1px solid var(--border-subtle)', borderRadius: '6px', padding: '0.6rem', maxHeight: '160px', overflowY: 'auto' }}>
-                <div style={{ color: '#38bdf8', marginBottom: '0.3rem' }}>
-                  • HTTP Status: [{test.expected?.statusCodes?.join(', ') || 200}]
+              <div style={{ background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', padding: '0.6rem', maxHeight: '160px', overflowY: 'auto', fontFamily: 'var(--font-mono)', fontSize: '0.72rem' }}>
+                <div style={{ color: 'var(--accent-cyan)', marginBottom: '0.3rem' }}>
+                  HTTP {test.expected?.statusCodes?.join(', ') || 200}
                 </div>
                 {test.expected?.description && (
-                  <div style={{ color: '#94a3b8', marginBottom: '0.4rem', fontSize: '0.75rem' }}>
+                  <div style={{ color: 'var(--text-muted)', marginBottom: '0.4rem', fontFamily: 'var(--font-sans)' }}>
                     {test.expected.description}
                   </div>
                 )}
-                {test.expected?.assertions?.map((a, i) => (
-                  <div key={i} style={{ color: '#a5b4fc', fontSize: '0.72rem', marginTop: '0.2rem' }}>
-                    • {a.target} {a.operator} {JSON.stringify(a.value)}
+                {test.expected?.assertions?.map((assertion, index) => (
+                  <div key={index} style={{ color: 'var(--text-main)', marginTop: '0.2rem' }}>
+                    {assertion.target} {assertion.operator} {JSON.stringify(assertion.value)}
                   </div>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* Actual Execution Result (if already executed) */}
           {result && (
             <div style={{
-              background: isFail ? 'rgba(244, 63, 94, 0.08)' : 'rgba(16, 185, 129, 0.08)',
-              border: `1px solid ${isFail ? 'var(--border-fail)' : 'var(--border-pass)'}`,
-              borderRadius: '6px',
+              background: isError ? 'var(--bg-warn)' : isFail ? 'var(--bg-fail)' : 'var(--bg-pass)',
+              border: `1px solid ${isError ? 'var(--border-warn)' : isFail ? 'var(--border-fail)' : 'var(--border-pass)'}`,
+              borderRadius: 'var(--radius-sm)',
               padding: '0.75rem'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
-                <strong style={{ color: isFail ? 'var(--color-fail)' : 'var(--color-pass)' }}>
-                  Actual Result: HTTP {result.actual?.status} {result.actual?.statusText || ''} ({result.durationMs}ms)
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.6rem', marginBottom: '0.4rem' }}>
+                <strong style={{ color: isError ? 'var(--color-warn)' : isFail ? 'var(--color-fail)' : 'var(--color-pass)' }}>
+                  {isError ? 'No response' : `HTTP ${result.actual?.status}`} · {result.durationMs}ms
                 </strong>
-                <button type="button" onClick={handleCopyCurl} className="btn btn-secondary btn-sm" style={{ padding: '0.2rem 0.45rem', fontSize: '0.75rem' }}>
-                  {copiedCurl ? <Check size={12} color="var(--color-pass)" /> : <Copy size={12} />}
-                  <span>{copiedCurl ? 'cURL Copied!' : 'Copy cURL'}</span>
+                <button type="button" onClick={handleCopyCurl} className="btn btn-secondary btn-sm">
+                  {copiedCurl ? <Check size={12} /> : <Copy size={12} />}
+                  <span>{copiedCurl ? 'Copied' : 'Copy cURL'}</span>
                 </button>
               </div>
 
-              {isFail && result.failureReason && (
-                <div style={{ color: 'var(--color-fail)', fontSize: '0.78rem', marginBottom: '0.4rem' }}>
-                  <strong>Observed Failure:</strong> {result.failureReason}
+              {isError && (
+                <div style={{ color: 'var(--color-warn)', fontSize: '0.8rem', marginBottom: '0.4rem' }}>
+                  {result.error || 'The request could not be completed. The endpoint may be unreachable, refused the connection, or timed out.'}
                 </div>
               )}
 
-              <pre tabIndex={0} role="region" aria-label="Actual response body" className="code-block" style={{ maxHeight: '140px', color: isFail ? 'var(--color-fail)' : 'var(--color-pass)' }}>
+              {isFail && result.failureReason && (
+                <div style={{ color: 'var(--color-fail)', fontSize: '0.78rem', marginBottom: '0.4rem' }}>
+                  {result.failureReason}
+                </div>
+              )}
+
+              <pre tabIndex={0} role="region" aria-label="Actual response body" className="code-block" style={{ maxHeight: '140px' }}>
                 {JSON.stringify(result.actual?.body, null, 2)}
               </pre>
             </div>

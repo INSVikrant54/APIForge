@@ -35,6 +35,8 @@ Thumbs.db
 test/
 tests/
 server/test/
+client/test-results/
+playwright-report/
 *.test.js
 scratch/
 

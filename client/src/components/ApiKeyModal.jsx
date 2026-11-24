@@ -116,8 +116,7 @@ export default function ApiKeyModal({
         left: 0,
         width: '100vw',
         height: '100vh',
-        backgroundColor: 'rgba(6, 9, 17, 0.85)',
-        backdropFilter: 'blur(8px)',
+        backgroundColor: 'var(--overlay)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -137,7 +136,7 @@ export default function ApiKeyModal({
           borderRadius: 'var(--radius-lg)',
           width: '100%',
           maxWidth: '560px',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.6)',
+          boxShadow: '0 12px 32px rgba(0,0,0,0.32)',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden'
@@ -150,14 +149,14 @@ export default function ApiKeyModal({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          background: 'rgba(56, 189, 248, 0.05)'
+          background: 'var(--accent-surface)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
             <div style={{
               width: '32px',
               height: '32px',
               borderRadius: 'var(--radius-sm)',
-              background: 'rgba(56, 189, 248, 0.15)',
+              background: 'var(--accent-surface)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -166,7 +165,7 @@ export default function ApiKeyModal({
             </div>
             <div>
               <h3 id="apiKeyModalTitle" style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                AI Model & API Key Configuration
+                AI settings
               </h3>
               <p id="apiKeyModalDescription" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                 Switch between server defaults and your own Google AI Studio credentials
@@ -210,7 +209,7 @@ export default function ApiKeyModal({
                 borderRadius: 'var(--radius-sm)',
                 border: '1px solid',
                 borderColor: useServerKey ? 'var(--accent-cyan)' : 'var(--border-subtle)',
-                background: useServerKey ? 'rgba(56, 189, 248, 0.08)' : 'var(--bg-surface)',
+                background: useServerKey ? 'var(--accent-surface)' : 'var(--bg-surface)',
                 cursor: 'pointer'
               }}>
                 <input
@@ -226,7 +225,7 @@ export default function ApiKeyModal({
                 />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span>Default Server Key (.env)</span>
+                    <span>Server key</span>
                     <span style={{
                       fontSize: '0.75rem',
                       background: health?.aiConfigured ? 'var(--bg-pass)' : 'rgba(245, 158, 11, 0.15)',
@@ -239,7 +238,7 @@ export default function ApiKeyModal({
                     </span>
                   </div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-                    Standard environment credentials. Recommended for hackathon judges and local testing.
+                    Uses the key configured for this workspace.
                   </div>
                 </div>
               </label>
@@ -253,7 +252,7 @@ export default function ApiKeyModal({
                 borderRadius: 'var(--radius-sm)',
                 border: '1px solid',
                 borderColor: !useServerKey ? 'var(--accent-cyan)' : 'var(--border-subtle)',
-                background: !useServerKey ? 'rgba(56, 189, 248, 0.08)' : 'var(--bg-surface)',
+                background: !useServerKey ? 'var(--accent-surface)' : 'var(--bg-surface)',
                 cursor: 'pointer'
               }}>
                 <input
@@ -269,10 +268,10 @@ export default function ApiKeyModal({
                 />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)' }}>
-                    Custom Gemini API Key (Bring Your Own Key)
+                    Your own API key
                   </div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-                    Use your personal Google AI Studio key. Stored only in your browser session and never saved on the server.
+                    Stored only in this browser session and never saved on the server.
                   </div>
                 </div>
               </label>
@@ -371,7 +370,7 @@ export default function ApiKeyModal({
           {/* Model Selection Dropdown */}
           <div className="form-group">
             <label className="form-label" style={{ fontWeight: 600, color: 'var(--text-main)' }}>
-              Target Model
+              Model
             </label>
             <select
               className="form-select"
@@ -380,7 +379,7 @@ export default function ApiKeyModal({
                 setSelectedModel(e.target.value);
                 setVerifyResult(null);
               }}
-              aria-label="Select AI Target Model"
+              aria-label="Select AI model"
             >
               {AVAILABLE_MODELS.map(m => (
                 <option key={m.id} value={m.id}>{m.name}</option>
@@ -445,8 +444,7 @@ export default function ApiKeyModal({
           >
             {verifying ? (
               <>
-                <span className="pulse-dot" style={{ backgroundColor: 'var(--accent-cyan)' }} />
-                <span>Testing Key...</span>
+                <span>Testing key…</span>
               </>
             ) : (
               <>
