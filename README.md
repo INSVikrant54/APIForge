@@ -2,6 +2,10 @@
 > **Automated Edge-Case Verification & Regression Testing for Modern APIs**  
 > 🏆 **Hacktoberfest Track Winner — Best Use of Gemma 4**
 
+[![CI](https://github.com/INSVikrant54/APIForge/actions/workflows/ci.yml/badge.svg)](https://github.com/INSVikrant54/APIForge/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](https://github.com/INSVikrant54/APIForge/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 APIForge is a developer platform that automatically discovers hidden API defects by combining **Gemma 4** (`gemma-4-26b-a4b-it`) AI reasoning with a **deterministic backend execution engine**. 
 
 Developers provide an API endpoint, a sample payload, and business rules written in plain English. APIForge synthesizes adversarial edge cases across 7 categories, gives developers complete control to inspect and fine-tune assertions, executes real HTTP requests through a security-hardened SSRF sandbox, and exports verified regression suites directly into CI/CD pipelines.
@@ -38,7 +42,6 @@ Developers provide an API endpoint, a sample payload, and business rules written
 - [Running the Application](#-running-the-application)
 - [Developer Quickstart](#-developer-quickstart)
 - [Regression Test Export (Jest & Pytest)](#-regression-test-export-jest--pytest)
-- [Roadmap](#-roadmap)
 - [License](#-license)
 
 ---
@@ -265,22 +268,20 @@ npm run dev:client
 
 ---
 
-## 📖 Developer Quickstart
+## 🚀 30-Second Quickstart
 
 1. Open **http://localhost:5173** in your browser.
-2. **Configure AI (Optional):** Click the **Gemma 4** badge in the top navigation to switch models or verify your API key connection.
-3. **Load a Contract:** Click **"Load Demo Preset"** in the left panel to populate the sample Order API contract, or input your own API endpoint.
-4. **Define Plain-English Rules:** Review the business rules (e.g., *"Stock must never go negative. Quantity must be a positive integer >= 1. Total price must match quantity * unitPrice"*).
-5. **Synthesize Edge Cases:** Click **"⚡ Synthesize Edge Cases"**. Gemma 4 generates 8–12 structured edge cases across the 7 categories.
-6. **Review Assertions:** Inspect the generated test cards. Modify payloads or expected status codes if needed.
-7. **Execute Tests:** Ensure the demo toggle is on **Vulnerable Mode** and click **"▶ Run All Assertions"**.
-8. **Catch the Bug:** Observe scenario `demo-004` (Negative quantity) **FAIL**. The server returned `201 Created` with a negative total balance instead of the expected `400 Bad Request`.
-9. **Inspect & Fix:**
-   - Click **"Inspect Bug"** to view the diff between expected and actual response.
-   - Click **"Copy cURL"** to reproduce the defect in your terminal.
-   - Click **"Generate AI Fix"** for a concrete code patch.
-10. **Verify Safe Mode:** Toggle the top switch to **Safe Mode Active** and click **"Run All Assertions"** again. All tests turn **100% GREEN**.
-11. **Export:** Click **"Export Regression Suite"** to download executable test suites for your CI pipeline.
+2. **Run the demo:** On the start screen, click **Run the demo** to load the built-in Order API.
+3. **Generate tests:** Click **Generate Test Plan**. Gemma 4 synthesizes 8–12 structured edge cases across 7 categories.
+4. **Review assertions:** Inspect the generated test cards and adjust payloads or expected status codes if needed.
+5. **Execute tests:** Click **Run N tests**. The demo starts in vulnerable mode, so a negative-quantity case should fail.
+6. **Catch the bug:** Observe the failing test. The server accepted invalid input instead of returning the expected `400 Bad Request`.
+7. **Inspect & fix:**
+   - Click **Inspect failure** to view expected vs. actual response.
+   - Click **Copy cURL** to reproduce the defect in your terminal.
+   - Click **Explain failure** for a concrete remediation suggestion.
+8. **Verify safe mode:** Switch the demo to **Use safe demo** and click **Run N tests** again. All tests should pass.
+9. **Export:** Click **Export** to download Jest/Pytest regression suites for CI.
 
 ---
 
@@ -317,16 +318,6 @@ def test_reject_negative_quantity():
     )
     assert res.status_code == 400
 ```
-
----
-
-## 🔮 Roadmap
-
-- [ ] **OpenAPI / Swagger 3.0 Import:** Upload JSON/YAML API specifications directly.
-- [ ] **Postman Collection Export:** Export test suites directly as Postman Collection v2.1 files.
-- [ ] **GitHub Actions CI/CD Integration:** Official GitHub Action to run APIForge assertions in pull requests.
-- [ ] **Response Latency SLA Benchmarking:** p95 and p99 response time threshold verification.
-- [ ] **Multi-Step State Workflows:** Chained requests verifying multi-endpoint transaction lifecycles.
 
 ---
 

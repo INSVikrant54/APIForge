@@ -32,17 +32,20 @@ Thumbs.db
 *.sw?
 
 # Tests & Scratch
-test/
-tests/
-server/test/
-client/test-results/
+**/test-results/
 playwright-report/
-*.test.js
 scratch/
 
-# AI Agent Tooling & Binaries
+# Local agent tooling and generated files
 .agent/
 .agents/
 .gemini/
 .codex/
+.impeccable/
 *.exe
+
+# Internal planning/design docs and optional standalone landing page
+PRODUCT.md
+DESIGN.md
+ROADMAP.md
+docs/

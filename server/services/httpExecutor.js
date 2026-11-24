@@ -41,9 +41,13 @@ export async function executeHttpRequest({
   localPort = 5000
 }) {
   const normalizedMethod = String(method).toUpperCase();
+  const parsedTimeout = Number(timeoutMs);
+  const boundedTimeoutMs = Number.isFinite(parsedTimeout)
+    ? Math.min(Math.max(Math.round(parsedTimeout), 1000), 30000)
+    : DEFAULT_TIMEOUT_MS;
 
   // 1. SSRF validation & URL resolution
-  const urlCheck = validateTargetUrl(targetUrl, localPort);
+  const urlCheck = await validateTargetUrl(targetUrl, localPort);
   if (!urlCheck.safe) {
     return {
       success: false,
@@ -60,7 +64,7 @@ export async function executeHttpRequest({
 
   // 2. Prepare Fetch options
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const timeoutId = setTimeout(() => controller.abort(), boundedTimeoutMs);
 
   const fetchOptions = {
     method: normalizedMethod,
@@ -131,7 +135,7 @@ export async function executeHttpRequest({
 
     const isTimeout = err.name === 'AbortError';
     const message = isTimeout
-      ? `Request timed out after ${timeoutMs}ms`
+      ? `Request timed out after ${boundedTimeoutMs}ms`
       : `Network / connection error: ${err.message}`;
 
     return {

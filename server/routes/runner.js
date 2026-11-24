@@ -16,6 +16,11 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: 'No tests provided to execute' });
   }
 
+  const parsedTimeout = Number(timeoutMs);
+  const boundedTimeoutMs = Number.isFinite(parsedTimeout)
+    ? Math.min(Math.max(Math.round(parsedTimeout), 1000), 30000)
+    : 6000;
+
   const localPort = process.env.PORT || 5000;
   const suiteStartTime = performance.now();
   const results = [];
@@ -81,7 +86,7 @@ router.post('/', async (req, res) => {
       targetUrl: testUrl,
       headers: reqConfig.headers || {},
       body: reqConfig.body,
-      timeoutMs,
+      timeoutMs: boundedTimeoutMs,
       localPort
     });
 

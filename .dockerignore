@@ -1,0 +1,33 @@
+# Build dependencies and generated output
+**/node_modules
+**/dist
+**/build
+**/coverage
+**/test-results
+**/playwright-report
+client/tests
+client/playwright.config.js
+server/test
+
+# Local configuration and secrets
+**/.env
+**/.env.*
+
+# Repository metadata and CI
+.git
+.github
+
+# Local agent/design tooling and planning artifacts
+.agent
+.agents
+.codex
+.gemini
+.impeccable
+scratch
+PRODUCT.md
+DESIGN.md
+ROADMAP.md
+docs
+
+# Logs
+*.log

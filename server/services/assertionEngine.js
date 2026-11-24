@@ -137,8 +137,8 @@ export function evaluateTestAssertions(actual, expected = {}, request = {}) {
         break;
 
       default:
-        assertionPassed = true;
-        detailMessage = `Unknown operator '${operator}', skipped`;
+        assertionPassed = false;
+        detailMessage = `Unknown assertion operator '${operator}' (fail-closed)`;
         break;
     }
 
@@ -160,29 +160,15 @@ export function evaluateTestAssertions(actual, expected = {}, request = {}) {
     }
   }
 
-  // 3. Business Rule Invariant: Total Price Math Check (if response contains totalPrice and order details)
-  if (actual.status >= 200 && actual.status < 300 && actual.body && actual.body.order) {
-    const order = actual.body.order;
-    if (typeof order.quantity === 'number' && typeof order.unitPrice === 'number' && typeof order.totalPrice === 'number') {
-      const calculatedExpected = Number((order.quantity * order.unitPrice).toFixed(2));
-      const isMathValid = Math.abs(order.totalPrice - calculatedExpected) < 0.001;
-      
-      const mathAssertion = {
-        id: 'assert-business-total-price',
-        type: 'businessRule',
-        description: 'Order totalPrice must equal quantity multiplied by unitPrice',
-        expected: calculatedExpected,
-        actual: order.totalPrice,
-        passed: isMathValid,
-        message: isMathValid
-          ? `Total price (${order.totalPrice}) correctly equals ${order.quantity} × ${order.unitPrice}`
-          : `Total price mismatch: got ${order.totalPrice}, expected ${calculatedExpected} (${order.quantity} × ${order.unitPrice})`
-      };
-      
-      results.push(mathAssertion);
-      if (!isMathValid) {
+  // 3. Demo-only business rule invariant (isolated from generic assertion engine)
+  const isDemoRequest = typeof request?.path === 'string' && request.path.includes('/api/demo/');
+  if (isDemoRequest) {
+    const demoAssertion = evaluateDemoOrderInvariants(actual);
+    if (demoAssertion) {
+      results.push(demoAssertion);
+      if (!demoAssertion.passed) {
         allPassed = false;
-        if (!primaryFailure) primaryFailure = mathAssertion.message;
+        if (!primaryFailure) primaryFailure = demoAssertion.message;
       }
     }
   }
@@ -191,5 +177,35 @@ export function evaluateTestAssertions(actual, expected = {}, request = {}) {
     passed: allPassed,
     assertions: results,
     primaryFailure: primaryFailure || (allPassed ? null : 'Assertion check failed')
+  };
+}
+
+/**
+ * Evaluates order-specific totalPrice math invariant for the built-in demo API.
+ * Kept separate from the generic assertion engine so external APIs are unaffected.
+ */
+export function evaluateDemoOrderInvariants(actual) {
+  if (!(actual.status >= 200 && actual.status < 300 && actual.body && actual.body.order)) {
+    return null;
+  }
+
+  const order = actual.body.order;
+  if (typeof order.quantity !== 'number' || typeof order.unitPrice !== 'number' || typeof order.totalPrice !== 'number') {
+    return null;
+  }
+
+  const calculatedExpected = Number((order.quantity * order.unitPrice).toFixed(2));
+  const isMathValid = Math.abs(order.totalPrice - calculatedExpected) < 0.001;
+
+  return {
+    id: 'assert-business-total-price',
+    type: 'businessRule',
+    description: 'Order totalPrice must equal quantity multiplied by unitPrice',
+    expected: calculatedExpected,
+    actual: order.totalPrice,
+    passed: isMathValid,
+    message: isMathValid
+      ? `Total price (${order.totalPrice}) correctly equals ${order.quantity} × ${order.unitPrice}`
+      : `Total price mismatch: got ${order.totalPrice}, expected ${calculatedExpected} (${order.quantity} × ${order.unitPrice})`
   };
 }
