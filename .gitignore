@@ -44,8 +44,7 @@ scratch/
 .impeccable/
 *.exe
 
-# Internal planning/design docs and optional standalone landing page
+# Internal planning and design docs (public docs/ landing page is tracked)
 PRODUCT.md
 DESIGN.md
 ROADMAP.md
-docs/

@@ -72,6 +72,7 @@ export async function executeHttpRequest({
       'User-Agent': 'APIForge-Test-Runner/1.0',
       ...headers
     },
+    redirect: 'manual',
     signal: controller.signal
   };
 

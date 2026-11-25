@@ -6,23 +6,23 @@
 [![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](https://github.com/INSVikrant54/APIForge/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-APIForge is a developer platform that automatically discovers hidden API defects by combining **Gemma 4** (`gemma-4-26b-a4b-it`) AI reasoning with a **deterministic backend execution engine**. 
+APIForge is a developer workbench for finding API edge cases. Google Gemini or Gemma models propose tests; a **deterministic backend execution engine** sends real HTTP requests and evaluates the results.
 
-Developers provide an API endpoint, a sample payload, and business rules written in plain English. APIForge synthesizes adversarial edge cases across 7 categories, gives developers complete control to inspect and fine-tune assertions, executes real HTTP requests through a security-hardened SSRF sandbox, and exports verified regression suites directly into CI/CD pipelines.
+Developers provide an API endpoint, a sample payload, and business rules written in plain English. APIForge proposes adversarial edge cases across 7 categories, lets developers inspect and fine-tune assertions, executes real HTTP requests with SSRF target checks, and exports regression suites that can be run in CI.
 
 ---
 
 ## 🌟 Key Features
 
-- **Adversarial Edge-Case Synthesis:** Powered by Google's open-weights **Gemma 4** (`gemma-4-26b-a4b-it`) through the official `@google/genai` SDK.
+- **Adversarial edge-case synthesis:** Uses Google Gemini or Gemma models through the official `@google/genai` SDK; the default is `gemini-3.5-flash-lite`.
 - **Deterministic Verification Engine:** Never relies on LLMs to hallucinate pass/fail results. Real HTTP requests are executed against the target server, and responses are verified by a strict assertion engine.
 - **Human-in-the-Loop Developer Control:** Inspect, edit, and fine-tune request payloads, headers, and expected assertions before firing a single request.
-- **Contract Ambiguity Detection:** Flags under-specified contract behaviors with a `Requires Review` badge before execution.
-- **Bring Your Own Key (BYOK) & Multi-Model Support:** Configure your own Gemini API key or switch between `gemma-4-26b-a4b-it`, `gemma-4-31b-it`, `gemini-3.8-flash`, `gemini-2.5-flash`, or custom models directly in the UI.
-- **AI Failure Diagnostics & cURL Export:** One-click root-cause analysis, actionable code remediation patches, and sanitized reproduction cURLs.
-- **One-Click CI/CD Regression Export:** Export discovered edge cases into production-ready **Jest (Supertest)** and **Pytest** test suites.
-- **Built-in Training & Verification Sandbox:** Interactive mock Order API with toggleable **Safe Mode** and **Vulnerable Mode** for rapid evaluation and testing.
-- **Enterprise SSRF Protection:** Prevents server-side request forgery by blocking private IP ranges (`127.0.0.0/8`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`) and cloud metadata services (`169.254.169.254`).
+- **Review before execution:** Marks ambiguous expectations for confirmation before those tests run.
+- **Choose your model:** Use the server-configured key or provide your own Gemini API key; select a supported Gemini/Gemma model or enter a custom model ID.
+- **Failure explanation & cURL export:** Optional AI-generated explanations and code suggestions, plus sanitized cURL commands for reproduction.
+- **Regression test export:** Export discovered edge cases as **Jest** and **Pytest** test files for your project or CI pipeline.
+- **Built-in demo API:** Switch between vulnerable and safe behavior to try the workflow without configuring an external target.
+- **SSRF safeguards:** Blocks private and reserved IPv4/IPv6 targets, checks DNS-resolved addresses, and allows only the built-in demo's internal requests.
 
 ---
 
@@ -40,7 +40,7 @@ Developers provide an API endpoint, a sample payload, and business rules written
 - [Getting Started & Installation](#-getting-started--installation)
 - [Environment Variables](#-environment-variables)
 - [Running the Application](#-running-the-application)
-- [Developer Quickstart](#-developer-quickstart)
+- [Quickstart](#-quickstart)
 - [Regression Test Export (Jest & Pytest)](#-regression-test-export-jest--pytest)
 - [License](#-license)
 
@@ -65,17 +65,17 @@ Generative AI chatbots can spit out lists of hypothetical test scenarios in mark
 2. **Untested Hypotheses:** Without executing real HTTP requests, there is zero proof whether an endpoint enforces a rule or silently violates it.
 3. **Friction to Action:** Developers must manually convert AI text into Postman collections, cURL commands, or automated test files.
 
-**APIForge’s Philosophy:** AI generates structured hypotheses; **deterministic backend code** tests reality. Pass or fail decisions are always evaluated against real HTTP status codes, headers, response times, and JSON payloads.
+**APIForge’s approach:** AI generates structured hypotheses; **deterministic backend code** tests reality. Pass/fail is based on the received HTTP status and configured response assertions. Response time is recorded for inspection, not used as a pass/fail threshold.
 
 ---
 
 ## 🧠 AI Engine & Flexible Model Architecture
 
-APIForge utilizes Google's state-of-the-art open-weights reasoning model **Gemma 4** (`gemma-4-26b-a4b-it`) via the official Google Gen AI SDK (`@google/genai`).
+APIForge uses Google Gemini and Gemma models through the official Google Gen AI SDK (`@google/genai`).
 
-- **Configurable Default Model:** Configured via the `GEMMA_MODEL` environment variable (defaults to `gemma-4-26b-a4b-it`).
-- **Structured Test Plan Synthesis:** Gemma analyzes the endpoint method, path, sample request, sample response, and plain-English business rules (e.g. *"Stock must never go negative. Quantity must be a positive integer >= 1. Total price must match quantity * unitPrice"*), producing 8–12 structured edge cases with strict JSON schema validation.
-- **AI Root-Cause Diagnosis:** When an HTTP request fails an assertion, Gemma analyzes the confirmed contract, the actual status code, the response body, and the failed assertion to formulate concrete remediation patches.
+- **Configurable default model:** Set with `GEMMA_MODEL`; the default is `gemini-3.5-flash-lite`.
+- **Structured test-plan synthesis:** The selected model analyzes the endpoint method, path, sample request, sample response, and plain-English business rules (e.g. *"Stock must never go negative. Quantity must be a positive integer >= 1. Total price must match quantity * unitPrice"*), then proposes 8–12 edge cases that are validated against the test-plan schema.
+- **Failure explanation:** On request, the selected model analyzes a failed assertion and can suggest a remediation. The deterministic runner—not the model—decides pass or fail.
 - **Graceful Offline Fallback:** If no Gemini API key is configured, APIForge automatically falls back to a deterministic, pre-configured test suite so developers can evaluate the entire execution engine offline.
 
 ---
@@ -92,7 +92,7 @@ APIForge includes native **BYOK (Bring Your Own Key)** support directly within t
   - `gemma-4-31b-it` (Larger reasoning model)
   - Custom model ID (for fine-tuned or internal Gemini endpoints)
 - **Live Connection Diagnostics:** Test key validity and model access instantly with the built-in **Test Connection** button (`POST /api/verify-key`).
-- **In-Memory Security:** User-supplied keys are maintained strictly in client memory and transmitted via runtime HTTP headers (`x-gemini-api-key`). Custom keys are never written to disk, databases, or log files.
+- **Session-scoped key handling:** User-supplied keys are kept in browser session storage and sent to the server in the `x-gemini-api-key` header for AI requests. APIForge does not save custom keys on the server.
 
 ---
 
@@ -102,8 +102,8 @@ APIForge includes native **BYOK (Bring Your Own Key)** support directly within t
 flowchart TD
     User([Developer / Browser]) -->|1. Endpoint, Payload & Rules| Frontend[React + Vite Frontend :5173]
     Frontend -->|2. POST /api/analyze| Server[Express.js Backend :5000]
-    Server -->|3. Rules & Schema Prompt| Gemma[Gemma 4 via @google/genai]
-    Gemma -->|4. Structured JSON Edge Cases| Server
+    Server -->|3. Rules & Schema Prompt| Model[Gemini or Gemma via @google/genai]
+    Model -->|4. Structured JSON Edge Cases| Server
     Server -->|5. Validated Schema| Frontend
     User -->|6. Inspect, Edit & Confirm Assertions| Frontend
     Frontend -->|7. POST /api/run-tests| Server
@@ -113,7 +113,7 @@ flowchart TD
     Engine -->|11. PASS / FAIL / ERROR Results| Frontend
     Frontend -->|12. Inspect Failure & Copy cURL| User
     Frontend -->|13. POST /api/explain-failure| Server
-    Server -->|14. Code Remediation Patch| Gemma
+    Server -->|14. Suggested explanation| Model
     Frontend -->|15. Export Runnable Suites| Exporter[Jest / Pytest Exporters]
 ```
 
@@ -121,7 +121,7 @@ flowchart TD
 
 ## 🎯 7 Edge-Case Test Categories
 
-Gemma 4 generates balanced, adversarial test scenarios across 7 specialized domains:
+The selected Gemini or Gemma model proposes test scenarios across 7 categories:
 
 | Category | Description | Example Scenario |
 | :--- | :--- | :--- |
@@ -151,11 +151,11 @@ To help teams evaluate the platform immediately without connecting an external b
 | • Accepts quantity: -5 and returns    | • Returns HTTP 400 Bad Request with:    |
 |   HTTP 201 Created with negative      |   {"error": "Quantity must be greater   |
 |   total price (-$4,995.00).           |   than zero"}                           |
-| • Fails assertion -> Flags RED!       | • Passes assertion -> 100% GREEN!       |
+| • Fails assertion -> Flags RED!       | • Expected checks pass; review cases stay flagged. |
 +---------------------------------------+-----------------------------------------+
 ```
 
-Toggle between modes instantly using the switch in the header to observe how APIForge catches the defect and verifies the fix.
+Use the demo control in the header to switch between the vulnerable and safe demo behavior, then rerun the tests to compare results.
 
 ---
 
@@ -168,20 +168,20 @@ APIForge is an interactive developer workbench, not an opaque black box:
    - `status`: Status code matching (e.g. `400`, `[200, 201]`)
    - `jsonPath`: Target specific properties in JSON responses (e.g. `body.error`, `body.order.totalPrice`)
    - `operators`: `equals`, `notEquals`, `exists`, `notExists`, `type`, `gt`, `lt`, `contains`
-3. **Contract Ambiguity Detection (`requiresReview`):** If Gemma detects that your plain-English rules did not specify behavior for an edge case, it flags the test card with an amber review badge so you can confirm or adjust the assertion before executing.
-4. **Target Any API:** Point APIForge to any local server, staging environment, or public REST endpoint.
+3. **Review uncertain expectations (`requiresReview`):** When a generated expectation needs confirmation, APIForge asks you to review or adjust it before execution.
+4. **Choose a target:** Test public HTTP/HTTPS APIs. Private and local network targets are blocked, except for APIForge's built-in demo API.
 
 ---
 
 ## 🛡️ Security & SSRF Safeguards
 
-Because APIForge executes HTTP requests on behalf of users, strict security measures are implemented at the networking layer:
+Because APIForge executes HTTP requests on behalf of users, it applies network and input safeguards:
 
-- **Zero Client-Side Secrets:** `GEMINI_API_KEY` is kept exclusively on the server. Custom BYOK keys are held in client state and passed only via memory headers.
-- **SSRF Guard (`ssrfGuard.js`):** Blocks outbound requests targeting private IP subnets (`127.0.0.0/8`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`) and cloud instance metadata endpoints (`169.254.169.254`), with an explicit allowlist only for internal sandbox routes (`/api/demo/*`).
-- **Sensitive Header Redaction:** Sensitive headers (`Authorization`, `Cookie`, `x-api-key`, `x-gemini-api-key`) are redacted from logs, cURL outputs, and exported test suites.
-- **Resource Limits:** Enforces a 6,000ms request timeout and truncates response bodies at 100KB to prevent memory exhaustion.
-- **No Arbitrary Code Execution:** The assertion engine runs in a restricted JavaScript sandbox—no dynamic `eval()` or untrusted shell execution.
+- **Key handling:** The server-configured `GEMINI_API_KEY` stays on the server. Custom keys are stored in browser session storage and sent in the request header when needed; APIForge does not save them on the server.
+- **SSRF target checks (`ssrfGuard.js`):** Rejects private or reserved IPv4/IPv6 targets, including hostnames resolving to restricted addresses. The runner does not follow redirects; 3xx responses are returned for inspection.
+- **Sensitive header redaction:** Sensitive headers (`Authorization`, `Cookie`, `x-api-key`, `x-gemini-api-key`) are redacted from logs, cURL outputs, and exported test suites.
+- **Request limits:** The configured fetch timeout defaults to 6 seconds and is clamped to 1–30 seconds. Response text returned in results is truncated at 100KB.
+- **No assertion-code execution:** Assertions use a fixed set of declarative operators; APIForge does not evaluate user-provided JavaScript or run shell commands.
 
 ---
 
@@ -195,16 +195,16 @@ Because APIForge executes HTTP requests on behalf of users, strict security meas
 
 ### Backend
 - **Node.js 20+** & **Express.js (ES Modules)**
-- **`@google/genai` (v2.31.0):** Official Google Gen AI SDK for Gemma 4 & Gemini
+- **`@google/genai` (v2.31.0):** Official Google Gen AI SDK for Gemini and Gemma models
 - **Deterministic Assertion Evaluator:** Precise status, JSONPath, and arithmetic invariant comparisons
-- **SSRF Guard & Bounded HTTP Client:** `AbortController` timeouts and IP range filters
+- **SSRF Guard & HTTP Client:** `AbortController` request timeouts and IP/DNS target checks
 
 ---
 
 ## 🚀 Getting Started & Installation
 
 ### Prerequisites
-- **Node.js:** v18.0.0 or higher (v20+ recommended)
+- **Node.js:** v20 or higher (the version used in CI and the production container)
 - **npm:** v9.0.0 or higher
 
 ### 1. Clone the repository
@@ -268,20 +268,17 @@ npm run dev:client
 
 ---
 
-## 🚀 30-Second Quickstart
+## 🚀 Quickstart
 
 1. Open **http://localhost:5173** in your browser.
-2. **Run the demo:** On the start screen, click **Run the demo** to load the built-in Order API.
-3. **Generate tests:** Click **Generate Test Plan**. Gemma 4 synthesizes 8–12 structured edge cases across 7 categories.
-4. **Review assertions:** Inspect the generated test cards and adjust payloads or expected status codes if needed.
-5. **Execute tests:** Click **Run N tests**. The demo starts in vulnerable mode, so a negative-quantity case should fail.
-6. **Catch the bug:** Observe the failing test. The server accepted invalid input instead of returning the expected `400 Bad Request`.
-7. **Inspect & fix:**
-   - Click **Inspect failure** to view expected vs. actual response.
-   - Click **Copy cURL** to reproduce the defect in your terminal.
-   - Click **Explain failure** for a concrete remediation suggestion.
-8. **Verify safe mode:** Switch the demo to **Use safe demo** and click **Run N tests** again. All tests should pass.
-9. **Export:** Click **Export** to download Jest/Pytest regression suites for CI.
+2. **Run the demo:** On the start screen, click **Run the demo**. APIForge loads the built-in Order API and prepares a test plan.
+3. **Review tests:** Inspect the generated test cards and adjust payloads or expected status codes if needed.
+4. **Execute tests:** Run the selected tests. The demo starts in vulnerable mode, so a negative-quantity scenario should fail.
+5. **Inspect the failure:** Open the failing test to compare the expected and actual response. Copy its cURL command to reproduce it, or request an optional AI explanation.
+6. **Verify safe mode:** Switch the demo to **Use safe demo** and rerun the tests. Expected checks should pass; cases marked for confirmation remain identified for review.
+7. **Export:** Click **Export** to download Jest/Pytest regression suites for CI.
+
+**For your own API:** Choose **Test my API**, enter a public endpoint and rules, then click **Generate Test Plan**. The selected Gemini or Gemma model proposes edge cases across 7 categories. Private and local network targets are blocked except for the built-in demo.
 
 ---
 

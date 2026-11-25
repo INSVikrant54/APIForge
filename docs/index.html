@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>APIForge — Deterministic API Edge-Case Verification</title>
+  <meta name="description" content="AI proposes adversarial edge cases from plain-English business rules. A deterministic HTTP runner and assertion engine decide pass or fail." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="nav">
+    <div class="container nav-inner">
+      <a href="#" class="brand">
+        <span class="brand-mark">AF</span>
+        <span>APIForge</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="#quickstart" class="hide-mobile">Quickstart</a>
+        <a href="#categories" class="hide-mobile">Categories</a>
+        <a href="#compare" class="hide-mobile">Compare</a>
+        <a href="https://github.com/INSVikrant54/APIForge" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <span class="kicker">OPEN SOURCE · MIT LICENSE · v1.3.0</span>
+          <h1>Find out how your API really behaves.</h1>
+          <p class="hero-sub">
+            Gemini or Gemma models propose edge cases from plain-English business rules.
+            A deterministic HTTP runner and assertion engine evaluate the actual responses; AI never decides pass or fail.
+          </p>
+          <div class="hero-actions">
+            <a href="#quickstart" class="btn btn-primary">Run the demo</a>
+            <a href="https://github.com/INSVikrant54/APIForge" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">View Source</a>
+          </div>
+        </div>
+
+        <aside class="console-card" aria-label="Sample verification run">
+          <div class="console-header">
+            <span>POST /api/demo/orders</span>
+            <span>HTTP Runner · Assertions</span>
+          </div>
+          <div class="console-body">
+            <div><span style="color: var(--text-dim);">// Business rule: "Quantity must be &gt; 0"</span></div>
+            <div class="verdict-row">
+              <span>demo-001 · valid order (qty: 2)</span>
+              <span class="badge badge-pass">PASS · 201</span>
+            </div>
+            <div class="verdict-row">
+              <span>demo-004 · negative qty (-1)</span>
+              <span class="badge badge-fail">FAIL · got 201</span>
+            </div>
+            <div class="verdict-row">
+              <span>demo-009 · ambiguous tax rule</span>
+              <span class="badge badge-warn">CONFIRM EXPECTATION</span>
+            </div>
+            <div style="margin-top: 12px; color: var(--text-dim);">
+              → Exported to Jest, Pytest, &amp; sanitized cURL
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="quickstart" class="section">
+      <div class="container">
+        <div class="section-header">
+          <h2>Run APIForge locally</h2>
+          <p>Try the built-in demo without an API key, or configure a Gemini or Gemma model to generate a test plan for your API.</p>
+        </div>
+        <div class="steps-grid">
+          <div class="card">
+            <div class="card-num">01 · CLONE &amp; INSTALL</div>
+            <h3>Install dependencies</h3>
+            <p>Monorepo with Express backend and React + Vite console.</p>
+            <pre class="code-snippet">git clone https://github.com/INSVikrant54/APIForge.git
+cd APIForge &amp;&amp; npm run install:all</pre>
+          </div>
+          <div class="card">
+            <div class="card-num">02 · LAUNCH</div>
+            <h3>Start server &amp; UI</h3>
+            <p>No API key required to evaluate the interactive Order API sandbox.</p>
+            <pre class="code-snippet">npm run dev
+# Open http://localhost:5173</pre>
+          </div>
+          <div class="card">
+            <div class="card-num">03 · VERIFY &amp; EXPORT</div>
+            <h3>Catch defects &amp; export</h3>
+            <p>Run the demo to prepare its test plan, execute the tests, inspect a failing case, switch to the safe demo, then rerun and export.</p>
+            <pre class="code-snippet">Run the demo
+Run selected tests
+Inspect failure
+Use safe demo</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="categories" class="section">
+      <div class="container">
+        <div class="section-header">
+          <h2>7 Edge-Case Verification Categories</h2>
+          <p>Every test plan balances normal behavior against adversarial inputs and business-logic violations.</p>
+        </div>
+        <div class="cat-grid">
+          <div class="card">
+            <span class="cat-tag">happy_path</span>
+            <h3>Baseline Contract</h3>
+            <p>Verifies valid payloads return expected 2xx status codes and response shapes.</p>
+          </div>
+          <div class="card">
+            <span class="cat-tag">missing_field</span>
+            <h3>Missing Required Fields</h3>
+            <p>Omits required parameters one by one to catch unhandled 500s.</p>
+          </div>
+          <div class="card">
+            <span class="cat-tag">type_validation</span>
+            <h3>Type Coercion</h3>
+            <p>Sends strings for numbers, booleans for objects, and unexpected nulls.</p>
+          </div>
+          <div class="card">
+            <span class="cat-tag">boundary</span>
+            <h3>Boundary Limits</h3>
+            <p>Probes zero, negative-one, and extreme numeric thresholds.</p>
+          </div>
+          <div class="card">
+            <span class="cat-tag">business_rule</span>
+            <h3>Plain-English Invariants</h3>
+            <p>Targets domain rules like non-positive quantities or negative unit prices.</p>
+          </div>
+          <div class="card">
+            <span class="cat-tag">malformed_input</span>
+            <h3>Malformed Payloads</h3>
+            <p>Tests empty bodies, unexpected structures, and invalid inputs.</p>
+          </div>
+          <div class="card">
+            <span class="cat-tag">inconsistent_data</span>
+            <h3>Semantic Contradictions</h3>
+            <p>Detects conflicting values and flags ambiguous contracts for human review.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="compare" class="section">
+      <div class="container">
+        <div class="section-header">
+          <h2>Where APIForge fits</h2>
+          <p>Built for developers who want to know what weird inputs break their backend—without writing test boilerplate first.</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Capability</th>
+                <th class="highlight-col">APIForge</th>
+                <th>Postman / Bruno</th>
+                <th>Schemathesis</th>
+                <th>Qodex / Keploy</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Required input to start</td>
+                <td class="highlight-col">URL + English rules</td>
+                <td>Manual collections</td>
+                <td>OpenAPI spec</td>
+                <td>CI / traffic proxy</td>
+              </tr>
+              <tr>
+                <td>Adversarial edge-case discovery</td>
+                <td class="highlight-col">AI-synthesized (7 categories)</td>
+                <td>Manual</td>
+                <td>Property-based fuzzing</td>
+                <td>Agent / recorded traffic</td>
+              </tr>
+              <tr>
+                <td>Deterministic pass/fail engine</td>
+                <td class="highlight-col">Yes (fail-closed)</td>
+                <td>Yes (JS scripts)</td>
+                <td>Yes (schema checks)</td>
+                <td>Varies</td>
+              </tr>
+              <tr>
+                <td>Built-in SSRF &amp; secret redaction</td>
+                <td class="highlight-col">DNS/IP checks + key redaction</td>
+                <td>Client-side</td>
+                <td>CLI</td>
+                <td>Agent-managed</td>
+              </tr>
+              <tr>
+                <td>CI regression export</td>
+                <td class="highlight-col">Jest &amp; Pytest</td>
+                <td>Newman / Bruno CLI</td>
+                <td>CLI</td>
+                <td>CI native</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span>APIForge v1.3.0 · Open source (MIT) · Deterministic API verification</span>
+      <div class="footer-links">
+        <a href="https://github.com/INSVikrant54/APIForge" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="https://github.com/INSVikrant54/APIForge/blob/release/v1.3.0/README.md" target="_blank" rel="noopener noreferrer">README</a>
+        <a href="https://github.com/INSVikrant54/APIForge/blob/release/v1.3.0/LICENSE" target="_blank" rel="noopener noreferrer">License</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
