@@ -160,7 +160,9 @@ export async function generateTestPlan(apiConfig) {
   // If client is missing or user explicitly requested offline demo for the demo route:
   if (!client || useOfflineDemo) {
     if (path.includes('/demo/') || useOfflineDemo) {
-      console.log('ℹ️ Utilizing Predefined Offline Demo Suite (No Gemini API key or offline demo requested)');
+      // Keep app diagnostics on stderr: Node's test runner parses child stdout
+      // for internal V8 frames, and non-ASCII bytes there can crash the runner.
+      console.error('ℹ️ Utilizing Predefined Offline Demo Suite (No Gemini API key or offline demo requested)');
       return applyImportedExpectations(getOfflineDemoPlan());
     }
     throw new Error(
