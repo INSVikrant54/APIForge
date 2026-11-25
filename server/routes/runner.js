@@ -1,5 +1,6 @@
 import express from 'express';
 import { runTestSuite } from '../services/testRunner.js';
+import { applyAuthToTests, authVariableNames, normalizeAuth } from '../utils/authResolver.js';
 import {
   getSecretValues,
   getVariableValues,
@@ -20,7 +21,8 @@ router.post('/', async (req, res) => {
     timeoutMs = 6000,
     environment = null,
     variables = null,
-    secretVariableNames = []
+    secretVariableNames = [],
+    auth = null
   } = req.body || {};
 
   if (!Array.isArray(tests) || tests.length === 0) {
@@ -36,8 +38,14 @@ router.post('/', async (req, res) => {
       : null;
     const records = env ? env.variables : normalizeVariables(variables);
     const values = getVariableValues(records);
-    const secretValues = getSecretValues(records, secretVariableNames);
-    const resolvedTests = substituteTests(tests, values);
+    const authConfig = normalizeAuth(auth);
+    // Credential variables are redacted even when they are not flagged secret,
+    // because auth values are sensitive by definition.
+    const secretValues = getSecretValues(records, [
+      ...(Array.isArray(secretVariableNames) ? secretVariableNames : []),
+      ...authVariableNames(authConfig)
+    ]);
+    const resolvedTests = applyAuthToTests(substituteTests(tests, values), authConfig, values);
     const resolvedBaseUrl = substituteBaseUrl(
       env && env.targetBaseUrl ? env.targetBaseUrl : targetBaseUrl,
       values

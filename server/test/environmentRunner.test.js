@@ -91,6 +91,32 @@ describe('environment-aware /api/run-tests', () => {
     assert.equal(JSON.stringify(data).includes(SECRET), false);
   });
 
+  it('applies auth at run time and redacts credentials even when unflagged', async () => {
+    const { status, data } = await post({
+      environment: {
+        name: 'staging',
+        variables: { KEY: SECRET }
+      },
+      auth: { type: 'apiKeyHeader', keyVariable: 'KEY', headerName: 'X-API-Key' },
+      tests: [{
+        id: 'auth-run',
+        name: 'Authenticated request',
+        request: {
+          method: 'POST',
+          path: '/api/demo/orders',
+          headers: { Accept: 'application/json' },
+          body: { productId: 1, quantity: 1, unitPrice: 10 }
+        },
+        expected: { statusCodes: [201] }
+      }]
+    });
+
+    assert.equal(status, 200);
+    assert.equal(data.summary.errors, 0);
+    assert.equal(data.results[0].request.headers['X-API-Key'], '[REDACTED]');
+    assert.equal(JSON.stringify(data).includes(SECRET), false);
+  });
+
   it('still accepts the legacy plain variables payload', async () => {
     const { status, data } = await post({
       variables: { productId: 7 },

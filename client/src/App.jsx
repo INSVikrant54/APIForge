@@ -15,8 +15,10 @@ import { applyParameterExamples } from './utils/openApiParams.js';
 import {
   buildGenerationConfig,
   createDefaultEnvironments,
+  currentAuth,
   currentEnvironment,
   environmentSecrets,
+  environmentValues,
   resolvedBaseUrl
 } from './utils/environments.js';
 import { redactSecrets, redactText } from '../../server/utils/environmentResolver.js';
@@ -65,6 +67,17 @@ export default function App() {
     environment: 'development',
     environments: createDefaultEnvironments()
   });
+
+  // Auth is stored per environment in React state only. Credential values are
+  // never typed here: each helper points at an environment variable.
+  const handleChangeAuth = (nextAuth) => {
+    setConfig((previous) => {
+      const name = previous.environment || 'development';
+      const environments = { ...previous.environments };
+      environments[name] = { ...(environments[name] || {}), auth: nextAuth };
+      return { ...previous, environments };
+    });
+  };
 
   // Test Suite & Execution state
   const [testSuite, setTestSuite] = useState(null);
@@ -392,7 +405,9 @@ export default function App() {
         targetBaseUrl: resolvedBaseUrl(config),
         tests: testSuite.tests,
         timeoutMs,
-        environment: currentEnvironment(config)
+        environment: currentEnvironment(config),
+        auth: currentAuth(config),
+        values: environmentValues(config)
       });
 
       const safeResults = redactSecrets(runnerRes.results || [], environmentSecrets(config));
@@ -414,7 +429,9 @@ export default function App() {
         targetBaseUrl: resolvedBaseUrl(config),
         tests: [{ ...test, selected: true }],
         timeoutMs,
-        environment: currentEnvironment(config)
+        environment: currentEnvironment(config),
+        auth: currentAuth(config),
+        values: environmentValues(config)
       });
 
       const singleResult = redactSecrets(runnerRes.results[0] || {}, environmentSecrets(config));
@@ -630,6 +647,10 @@ export default function App() {
                 onOpenAiSettings={() => setApiKeyModalOpen(true)}
                 timeoutMs={timeoutMs}
                 onChangeTimeout={setTimeoutMs}
+                authConfig={currentAuth(config)}
+                variableNames={Object.keys(currentEnvironment(config).variables || {})}
+                environmentName={config.environment}
+                onChangeAuth={handleChangeAuth}
               />
             </div>
           )}

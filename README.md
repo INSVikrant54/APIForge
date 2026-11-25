@@ -3,7 +3,7 @@
 > 🏆 **Hacktoberfest Track Winner — Best Use of Gemma 4**
 
 [![CI](https://github.com/INSVikrant54/APIForge/actions/workflows/ci.yml/badge.svg)](https://github.com/INSVikrant54/APIForge/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-1.6.0-blue.svg)](https://github.com/INSVikrant54/APIForge/releases)
+[![Version](https://img.shields.io/badge/version-1.7.0-blue.svg)](https://github.com/INSVikrant54/APIForge/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 APIForge is a developer workbench for finding API edge cases. Google Gemini or Gemma models propose tests; a **deterministic backend execution engine** sends real HTTP requests and evaluates the results.
@@ -181,7 +181,7 @@ APIForge is an interactive developer workbench, not an opaque black box:
 
 ## 📥 OpenAPI / Swagger Import
 
-APIForge can read an **OpenAPI 3.0.x** or **Swagger 2.0** contract supplied as JSON or YAML and turn its operations into test-plan-ready endpoint descriptors. This was the first Phase 1 capability to ship; named environments and variables followed in v1.6.0. Auth helpers, Postman interoperability, and request chaining remain unimplemented.
+APIForge can read an **OpenAPI 3.0.x** or **Swagger 2.0** contract supplied as JSON or YAML and turn its operations into test-plan-ready endpoint descriptors. This was the first Phase 1 capability to ship; named environments, variables, and authentication helpers followed in v1.7.0. Postman interoperability and request chaining remain unimplemented.
 
 ### Supported scope
 
@@ -228,6 +228,8 @@ v1.6.0 adds the environment slice of Phase 1: named environments (`development`,
 - **UI:** Choose an environment from the selector in the request panel and expand **Environment variables** to edit values per environment. Values are session-only and switching environments keeps each environment's values separate.
 - **CLI:** `apiforge init --env development,staging,production --secret API_KEY --yes` writes placeholder-only environments into `apiforge.config.json`. `apiforge run suite.json --env staging --secret API_KEY` injects a secret from `process.env.API_KEY`, or use `--secret API_KEY=value`; `--secret` is repeatable. Local config environments are merged into suite environments, with local values taking precedence. Runtime secrets are never written to disk.
 - **Server:** `POST /api/run-tests` accepts an `environment` descriptor and applies the same resolver before the existing SSRF guard. Redirect handling is unchanged: redirects are never followed.
+
+v1.7.0 adds per-environment authentication helpers. Choose **None**, **Bearer token**, **API key (header)**, **API key (query parameter)**, or **Basic auth** under Settings → Authentication. Each helper references an environment variable by name; credential values are never typed into the auth panel and are never written to disk. Headers and query parameters are attached at call time in the browser and again (idempotently) on the server, so direct API callers get the same behavior. Credential variables are redacted from run results, history, cURL output, and exports even if they are not flagged as secret. Unsafe header names and missing variables are skipped rather than sending an empty credential.
 
 This is a coherent feature slice, not a claim that all of Phase 1 is complete. The full Phase 1 → 2.0.0 and Phase 2 → 2.1.0 version sequence remains open.
 

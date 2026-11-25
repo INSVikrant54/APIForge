@@ -4,6 +4,7 @@
  * they are never written to localStorage or sent to the AI analyzer.
  */
 
+import { authVariableNames, normalizeAuth } from '../../../server/utils/authResolver.js';
 import {
   getSecretValues,
   getVariableValues,
@@ -42,7 +43,19 @@ export function environmentValues(config = {}) {
 }
 
 export function environmentSecrets(config = {}) {
-  return getSecretValues(currentEnvironment(config).variables);
+  const env = currentEnvironment(config);
+  // Auth credentials are redacted whether or not their variables carry the
+  // `secret` flag: using a variable as a credential makes it sensitive.
+  return getSecretValues(env.variables, authVariableNames(currentAuth(config)));
+}
+
+/** Auth config for the selected environment; config values stay in React state. */
+export function currentAuth(config = {}) {
+  const name = config.environment || ENVIRONMENT_NAMES[0];
+  const raw = config.environments && config.environments[name]
+    ? config.environments[name].auth
+    : null;
+  return normalizeAuth(raw);
 }
 
 /** Only non-secret values are safe to send to the AI plan generator. */

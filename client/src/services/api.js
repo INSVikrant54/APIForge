@@ -3,6 +3,8 @@
  * Dispatches requests to the Express backend API
  */
 
+import { applyAuthToTests } from '../../../server/utils/authResolver.js';
+
 export async function fetchHealth() {
   const res = await fetch('/api/health');
   if (!res.ok) throw new Error(`Health check failed with HTTP ${res.status}`);
@@ -73,11 +75,14 @@ export async function generateTestPlanApi(config, aiSettings = null) {
   return data.data;
 }
 
-export async function runTestsApi({ targetBaseUrl, tests, timeoutMs, environment = null }) {
+export async function runTestsApi({ targetBaseUrl, tests, timeoutMs, environment = null, auth = null, values = null }) {
+  // Auth is attached at call time from current-environment values. The server
+  // applies the same config idempotently and redacts credential values.
+  const preparedTests = applyAuthToTests(tests, auth, values);
   const res = await fetch('/api/run-tests', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ targetBaseUrl, tests, timeoutMs, environment })
+    body: JSON.stringify({ targetBaseUrl, tests: preparedTests, timeoutMs, environment, auth })
   });
   const data = await res.json();
   if (!res.ok) {
