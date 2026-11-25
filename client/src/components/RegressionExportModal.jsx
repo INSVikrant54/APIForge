@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { X, Copy, Check, Download, FileCode } from 'lucide-react';
 import { generateJestSuite } from '../utils/exportJest.js';
 import { generatePytestSuite } from '../utils/exportPytest.js';
+import { redactSecrets } from '../../../server/utils/environmentResolver.js';
 
 export default function RegressionExportModal({
   testSuite,
   results,
+  secretValues = [],
   onClose
 }) {
   const [format, setFormat] = useState('jest'); // 'jest' | 'pytest'
@@ -25,20 +27,25 @@ export default function RegressionExportModal({
 
   if (!testSuite) return null;
 
+  // Exports are generated from redacted copies so secret values can never be
+  // copied or downloaded, even if a generated test contains one.
+  const safeSuite = redactSecrets(testSuite, secretValues);
+  const safeResults = redactSecrets(results || [], secretValues);
+
   // Filter if failures only requested
   const filteredSuite = failuresOnly
     ? {
-        ...testSuite,
-        tests: testSuite.tests.filter(t => {
-          const res = results?.find(r => r.id === t.id);
+        ...safeSuite,
+        tests: safeSuite.tests.filter(t => {
+          const res = safeResults.find(r => r.id === t.id);
           return res?.status === 'FAIL';
         })
       }
-    : testSuite;
+    : safeSuite;
 
   const generatedCode = format === 'jest'
-    ? generateJestSuite(filteredSuite, results)
-    : generatePytestSuite(filteredSuite, results);
+    ? generateJestSuite(filteredSuite, safeResults)
+    : generatePytestSuite(filteredSuite, safeResults);
 
   const fileName = format === 'jest' ? 'api_regression.test.js' : 'test_api_regression.py';
 

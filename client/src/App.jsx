@@ -13,6 +13,14 @@ import SettingsView from './components/SettingsView.jsx';
 import { PRESETS } from './utils/presets.js';
 import { applyParameterExamples } from './utils/openApiParams.js';
 import {
+  buildGenerationConfig,
+  createDefaultEnvironments,
+  currentEnvironment,
+  environmentSecrets,
+  resolvedBaseUrl
+} from './utils/environments.js';
+import { redactSecrets, redactText } from '../../server/utils/environmentResolver.js';
+import {
   fetchHealth,
   fetchDemoMode,
   setDemoMode,
@@ -53,7 +61,9 @@ export default function App() {
     headers: PRESETS[0].headers,
     body: PRESETS[0].body,
     sampleResponse: PRESETS[0].sampleResponse,
-    businessRules: PRESETS[0].businessRules
+    businessRules: PRESETS[0].businessRules,
+    environment: 'development',
+    environments: createDefaultEnvironments()
   });
 
   // Test Suite & Execution state
@@ -159,14 +169,21 @@ export default function App() {
 
   // Save run to local history
   const recordRunToHistory = (suite, runSummary, runResults) => {
+    const secrets = environmentSecrets(config);
+    const safe = redactSecrets({
+      suiteName: suite.suiteName,
+      path: config.path,
+      results: runResults,
+      tests: suite.tests
+    }, secrets);
     const newRun = {
       id: `run-${Date.now()}`,
       timestamp: new Date().toISOString(),
-      suiteName: suite.suiteName,
-      path: config.path,
+      suiteName: safe.suiteName,
+      path: safe.path,
       summary: runSummary,
-      results: runResults,
-      tests: suite.tests
+      results: safe.results,
+      tests: safe.tests
     };
 
     const updated = [newRun, ...recentRuns].slice(0, 20); // Keep last 20 runs
@@ -200,7 +217,7 @@ export default function App() {
 
     try {
       const plan = await generateTestPlanApi({
-        ...config,
+        ...buildGenerationConfig(config),
         useOfflineDemo: shouldFallbackOffline
       }, aiSettings);
       setTestSuite(plan);
@@ -215,7 +232,8 @@ export default function App() {
   // Load and generate interactive demo with one click
   const handleLoadDemo = async () => {
     const demoPreset = PRESETS[0];
-    setConfig({
+    const nextConfig = {
+      ...config,
       method: demoPreset.method,
       path: demoPreset.path,
       expectedStatus: demoPreset.expectedStatus,
@@ -223,7 +241,8 @@ export default function App() {
       body: demoPreset.body,
       sampleResponse: demoPreset.sampleResponse,
       businessRules: demoPreset.businessRules
-    });
+    };
+    setConfig(nextConfig);
 
     setLoadingPlan(true);
     setPlanError(null);
@@ -235,7 +254,7 @@ export default function App() {
 
     try {
       const plan = await generateTestPlanApi({
-        ...demoPreset,
+        ...buildGenerationConfig(nextConfig),
         useOfflineDemo: shouldFallbackOffline
       }, aiSettings);
       setTestSuite(plan);
@@ -304,6 +323,7 @@ export default function App() {
     const headers = endpoint.request?.headers || {};
 
     setConfig({
+      ...config,
       method: endpoint.method,
       path,
       expectedStatus: expectedStatusCodes[0] ?? '',
@@ -369,14 +389,16 @@ export default function App() {
 
     try {
       const runnerRes = await runTestsApi({
-        targetBaseUrl: config.importMetadata?.serverBaseUrl || (config.path.startsWith('http') ? config.path : ''),
+        targetBaseUrl: resolvedBaseUrl(config),
         tests: testSuite.tests,
-        timeoutMs
+        timeoutMs,
+        environment: currentEnvironment(config)
       });
 
+      const safeResults = redactSecrets(runnerRes.results || [], environmentSecrets(config));
       setSummary(runnerRes.summary);
-      setResults(runnerRes.results);
-      recordRunToHistory(testSuite, runnerRes.summary, runnerRes.results);
+      setResults(safeResults);
+      recordRunToHistory(testSuite, runnerRes.summary, safeResults);
     } catch (err) {
       setBanner({ message: `Execution failed: ${err.message}. The backend runner did not respond — confirm the API server is up and retry.` });
     } finally {
@@ -389,12 +411,13 @@ export default function App() {
     setRunningTests(true);
     try {
       const runnerRes = await runTestsApi({
-        targetBaseUrl: config.importMetadata?.serverBaseUrl || (config.path.startsWith('http') ? config.path : ''),
+        targetBaseUrl: resolvedBaseUrl(config),
         tests: [{ ...test, selected: true }],
-        timeoutMs
+        timeoutMs,
+        environment: currentEnvironment(config)
       });
 
-      const singleResult = runnerRes.results[0];
+      const singleResult = redactSecrets(runnerRes.results[0] || {}, environmentSecrets(config));
       setResults(prev => {
         const filtered = (prev || []).filter(r => r.id !== test.id);
         return [...filtered, singleResult];
@@ -424,7 +447,7 @@ export default function App() {
         test,
         actual: result.actual,
         failedAssertion: result.failureReason,
-        businessRules: config.businessRules
+        businessRules: redactText(config.businessRules || '', environmentSecrets(config))
       }, aiSettings);
       setFailureExplanation(explanation);
     } catch (err) {
@@ -567,7 +590,7 @@ export default function App() {
                     testSuite={testSuite}
                     results={results}
                     summary={summary}
-                    targetPath={config.path}
+                    targetPath={redactText(config.path || '', environmentSecrets(config))}
                     onToggleSelect={handleToggleSelect}
                     onSelectAll={handleSelectAll}
                     onDeselectAll={handleDeselectAll}
@@ -643,6 +666,7 @@ export default function App() {
         <RegressionExportModal
           testSuite={testSuite}
           results={results}
+          secretValues={environmentSecrets(config)}
           onClose={() => setExportModalOpen(false)}
         />
       )}

@@ -73,11 +73,11 @@ export async function generateTestPlanApi(config, aiSettings = null) {
   return data.data;
 }
 
-export async function runTestsApi({ targetBaseUrl, tests, timeoutMs }) {
+export async function runTestsApi({ targetBaseUrl, tests, timeoutMs, environment = null }) {
   const res = await fetch('/api/run-tests', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ targetBaseUrl, tests, timeoutMs })
+    body: JSON.stringify({ targetBaseUrl, tests, timeoutMs, environment })
   });
   const data = await res.json();
   if (!res.ok) {

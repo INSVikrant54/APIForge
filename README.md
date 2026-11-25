@@ -3,7 +3,7 @@
 > 🏆 **Hacktoberfest Track Winner — Best Use of Gemma 4**
 
 [![CI](https://github.com/INSVikrant54/APIForge/actions/workflows/ci.yml/badge.svg)](https://github.com/INSVikrant54/APIForge/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-1.5.0-blue.svg)](https://github.com/INSVikrant54/APIForge/releases)
+[![Version](https://img.shields.io/badge/version-1.6.0-blue.svg)](https://github.com/INSVikrant54/APIForge/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 APIForge is a developer workbench for finding API edge cases. Google Gemini or Gemma models propose tests; a **deterministic backend execution engine** sends real HTTP requests and evaluates the results.
@@ -16,6 +16,7 @@ Developers provide an API endpoint, a sample payload, and business rules written
 
 - **Adversarial edge-case synthesis:** Uses Google Gemini or Gemma models through the official `@google/genai` SDK; the default is `gemini-3.5-flash-lite`.
 - **OpenAPI / Swagger import:** Paste or upload an OpenAPI 3.0.x or Swagger 2.0 JSON/YAML spec to pre-fill operations, parameters, sample bodies, and the success status codes declared in the contract. See [OpenAPI / Swagger Import](#-openapi--swagger-import).
+- **Named environments & variables:** Switch between `development`, `staging`, and `production`, use `{{baseUrl}}` / `{{apiKey}}` placeholders everywhere, and keep secret values out of storage, history, and exports. See [Environments & Variables](#-environments--variables).
 - **Phase 2 CLI:** Create a config, import a spec into a versioned suite file, and run suites from the terminal with text, JSON, JUnit XML, or SARIF output. See [Phase 2 CLI](#-phase-2-cli).
 - **Deterministic Verification Engine:** Never relies on LLMs to hallucinate pass/fail results. Real HTTP requests are executed against the target server, and responses are verified by a strict assertion engine.
 - **Human-in-the-Loop Developer Control:** Inspect, edit, and fine-tune request payloads, headers, and expected assertions before firing a single request.
@@ -35,6 +36,7 @@ Developers provide an API endpoint, a sample payload, and business rules written
 - [Bring Your Own Key (BYOK)](#-bring-your-own-key-byok)
 - [System Architecture](#-system-architecture)
 - [OpenAPI / Swagger Import](#-openapi--swagger-import)
+- [Environments & Variables](#-environments--variables)
 - [7 Edge-Case Test Categories](#-7-edge-case-test-categories)
 - [Interactive Sandbox: Safe vs. Vulnerable Mode](#-interactive-sandbox-safe-vs-vulnerable-mode)
 - [Developer Control & Custom Assertions](#-developer-control--custom-assertions)
@@ -179,7 +181,7 @@ APIForge is an interactive developer workbench, not an opaque black box:
 
 ## 📥 OpenAPI / Swagger Import
 
-APIForge can read an **OpenAPI 3.0.x** or **Swagger 2.0** contract supplied as JSON or YAML and turn its operations into test-plan-ready endpoint descriptors. This was the first Phase 1 capability to ship. The Phase 2 CLI can also import a spec into a versioned suite file, but the rest of Phase 1 (shared environments and variables, auth helpers, Postman interoperability, and request chaining) remains unimplemented.
+APIForge can read an **OpenAPI 3.0.x** or **Swagger 2.0** contract supplied as JSON or YAML and turn its operations into test-plan-ready endpoint descriptors. This was the first Phase 1 capability to ship; named environments and variables followed in v1.6.0. Auth helpers, Postman interoperability, and request chaining remain unimplemented.
 
 ### Supported scope
 
@@ -217,13 +219,27 @@ A successful response is `{ "success": true, "data": [ ...endpoints ] }`. Malfor
 
 ---
 
+## 🌍 Environments & Variables
+
+v1.6.0 adds the environment slice of Phase 1: named environments (`development`, `staging`, `production`), `{{baseUrl}}` / `{{apiKey}}` style placeholders, and an environment selector in the request panel.
+
+- **One resolver, three surfaces:** `server/utils/environmentResolver.js` is a pure, dependency-free module used by the server runner, the CLI, and the browser client. It normalizes plain values and `{ value, secret }` records, resolves a named environment, and recursively substitutes strings, objects, arrays, paths, headers, and bodies. Substitution is bounded; unknown placeholders stay visible so they can be fixed rather than silently becoming empty strings.
+- **Secret handling:** Mark a variable as secret in the UI or with `{ "value": "...", "secret": true }` in a config/suite file. Secrets are used at run time, never written to `localStorage`, and redacted (`[REDACTED]`) from run results, recent-run history, regression exports, cURL output, and CLI text/JSON/JUnit/SARIF reports. Non-secret values are resolved for AI plan generation; secret values are injected only for execution.
+- **UI:** Choose an environment from the selector in the request panel and expand **Environment variables** to edit values per environment. Values are session-only and switching environments keeps each environment's values separate.
+- **CLI:** `apiforge init --env development,staging,production --secret API_KEY --yes` writes placeholder-only environments into `apiforge.config.json`. `apiforge run suite.json --env staging --secret API_KEY` injects a secret from `process.env.API_KEY`, or use `--secret API_KEY=value`; `--secret` is repeatable. Local config environments are merged into suite environments, with local values taking precedence. Runtime secrets are never written to disk.
+- **Server:** `POST /api/run-tests` accepts an `environment` descriptor and applies the same resolver before the existing SSRF guard. Redirect handling is unchanged: redirects are never followed.
+
+This is a coherent feature slice, not a claim that all of Phase 1 is complete. The full Phase 1 → 2.0.0 and Phase 2 → 2.1.0 version sequence remains open.
+
+---
+
 ## 🛡️ Security & SSRF Safeguards
 
 Because APIForge executes HTTP requests on behalf of users, it applies network and input safeguards:
 
 - **Key handling:** The server-configured `GEMINI_API_KEY` stays on the server. Custom keys are stored in browser session storage and sent in the request header when needed; APIForge does not save them on the server.
 - **SSRF target checks (`ssrfGuard.js`):** Rejects private or reserved IPv4/IPv6 targets, including hostnames resolving to restricted addresses. The runner does not follow redirects; 3xx responses are returned for inspection.
-- **Sensitive header redaction:** Sensitive headers (`Authorization`, `Cookie`, `x-api-key`, `x-gemini-api-key`) are redacted from logs, cURL outputs, and exported test suites.
+- **Sensitive header and variable redaction:** Sensitive headers (`Authorization`, `Cookie`, `x-api-key`, `x-gemini-api-key`) and variables marked `secret` are redacted from logs, cURL outputs, run history, and exported test suites.
 - **Request limits:** The configured fetch timeout defaults to 6 seconds and is clamped to 1–30 seconds. Response text returned in results is truncated at 100KB.
 - **No assertion-code execution:** Assertions use a fixed set of declarative operators; APIForge does not evaluate user-provided JavaScript or run shell commands.
 

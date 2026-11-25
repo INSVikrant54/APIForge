@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
 import { Sparkles, Code, AlertCircle, Wand2, Check } from 'lucide-react';
+import { currentEnvironment, createDefaultEnvironments } from '../utils/environments.js';
+import {
+  getSecretValues,
+  getVariableValues,
+  redactText,
+  substituteString
+} from '../../../server/utils/environmentResolver.js';
 
 
 const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
@@ -20,6 +27,50 @@ export default function ConfigPanel({
   });
   const [beautified, setBeautified] = useState(false);
   const isMac = typeof navigator !== 'undefined' && /Mac/i.test(navigator.platform || navigator.userAgent || '');
+
+  const environments = config.environments || createDefaultEnvironments();
+  const environment = currentEnvironment(config);
+  const resolvedPreview = redactText(
+    substituteString(config.path || '', getVariableValues(environment.variables)),
+    getSecretValues(environment.variables)
+  );
+
+  const updateEnvironment = (updater) => {
+    const next = { ...environments };
+    next[environment.name] = updater(next[environment.name] || { targetBaseUrl: '', variables: {} });
+    onChangeConfig({ ...config, environments: next });
+  };
+
+  const setVariable = (name, patch) => updateEnvironment((env) => ({
+    ...env,
+    variables: {
+      ...env.variables,
+      [name]: { ...(env.variables?.[name] || { value: '', secret: false }), ...patch }
+    }
+  }));
+
+  const renameVariable = (oldName, newName) => {
+    if (oldName === newName) return;
+    updateEnvironment((env) => {
+      const variables = {};
+      for (const [key, value] of Object.entries(env.variables || {})) {
+        variables[key === oldName ? newName : key] = value;
+      }
+      return { ...env, variables };
+    });
+  };
+
+  const removeVariable = (name) => updateEnvironment((env) => {
+    const variables = { ...env.variables };
+    delete variables[name];
+    return { ...env, variables };
+  });
+
+  const addVariable = () => {
+    let index = 1;
+    while (Object.prototype.hasOwnProperty.call(environment.variables || {}, `variable-${index}`)) index += 1;
+    setVariable(`variable-${index}`, { value: '', secret: false });
+  };
 
   const updateEndpointConfig = (patch) => {
     const keys = Object.keys(patch);
@@ -266,6 +317,85 @@ export default function ConfigPanel({
               : 'Review the imported server URL before running tests.'}
           </p>
         )}
+      </div>
+
+      {/* Named environment and its variables */}
+      <div className="form-group">
+        <label className="form-label" htmlFor="environment-select">Environment</label>
+        <select
+          id="environment-select"
+          className="form-input"
+          value={config.environment || environment.name}
+          aria-describedby="environment-hint"
+          onChange={(e) => onChangeConfig({ ...config, environment: e.target.value })}
+        >
+          {Object.keys(environments).map((name) => (
+            <option key={name} value={name}>{name}</option>
+          ))}
+        </select>
+        <p id="environment-hint" className="form-hint">
+          Use <code style={{ fontFamily: 'var(--font-mono)' }}>{'{{baseUrl}}'}</code> and{' '}
+          <code style={{ fontFamily: 'var(--font-mono)' }}>{'{{apiKey}}'}</code> in the endpoint, headers, or body.
+          Secret values are used at run time and are never saved in the browser.
+        </p>
+        {resolvedPreview !== (config.path || '') && (
+          <p className="form-hint">
+            Resolved endpoint: <code style={{ fontFamily: 'var(--font-mono)' }}>{resolvedPreview}</code>
+          </p>
+        )}
+        <details style={{ marginTop: '0.5rem' }}>
+          <summary style={{ cursor: 'pointer', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+            Environment variables
+          </summary>
+          <div style={{ marginTop: '0.5rem' }}>
+            {Object.entries(environment.variables || {}).map(([name, raw], index) => {
+              const record = raw && typeof raw === 'object' ? raw : { value: raw, secret: false };
+              return (
+                <div key={index} style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <input
+                    type="text"
+                    className="form-input"
+                    style={{ flex: '1 1 110px', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}
+                    value={name}
+                    aria-label={`Variable ${name} name`}
+                    onChange={(e) => renameVariable(name, e.target.value)}
+                  />
+                  <input
+                    type={record.secret ? 'password' : 'text'}
+                    className="form-input"
+                    style={{ flex: '1 1 160px', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}
+                    value={record.value ?? ''}
+                    placeholder={record.secret ? 'Not saved' : ''}
+                    autoComplete="off"
+                    aria-label={`Value for ${name}`}
+                    onChange={(e) => setVariable(name, { value: e.target.value })}
+                  />
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(record.secret)}
+                      aria-label={`Mark ${name} as secret`}
+                      onChange={(e) => setVariable(name, { secret: e.target.checked })}
+                    />
+                    Secret
+                  </label>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    style={{ padding: '0.25rem 0.55rem', fontSize: '0.75rem' }}
+                    aria-label={`Remove variable ${name}`}
+                    onClick={() => removeVariable(name)}
+                  >
+                    Remove
+                  </button>
+                </div>
+              );
+            })}
+            <button type="button" className="btn btn-secondary" style={{ fontSize: '0.75rem' }} onClick={addVariable}>
+              Add variable
+            </button>
+          </div>
+        </details>
       </div>
 
       {/* Tabs: Request Body | Headers | Sample Response */}
