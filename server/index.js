@@ -21,6 +21,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Render terminates TLS at a proxy; this lets express-rate-limit see the real client IP.
+app.set('trust proxy', 1);
+
 const DEFAULT_DEV_ORIGINS = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
@@ -28,9 +31,28 @@ const DEFAULT_DEV_ORIGINS = [
   `http://127.0.0.1:${PORT}`
 ];
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS
+const configuredOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()).filter(Boolean)
-  : DEFAULT_DEV_ORIGINS;
+  : null;
+
+// Render exposes the public URL of this deployment. Vite adds `crossorigin`
+// to the built <script>/<link> tags, so the browser sends an Origin header on
+// same-origin asset requests too. That origin must be accepted or the assets
+// are rejected and the UI renders as a blank page.
+function getOwnProductionOrigin() {
+  if (!process.env.RENDER_EXTERNAL_URL) return null;
+  try {
+    return new URL(process.env.RENDER_EXTERNAL_URL).origin;
+  } catch {
+    return null;
+  }
+}
+
+const ownProductionOrigin = getOwnProductionOrigin();
+const allowedOrigins = [
+  ...(configuredOrigins || (process.env.NODE_ENV === 'production' ? [] : DEFAULT_DEV_ORIGINS)),
+  ...(ownProductionOrigin ? [ownProductionOrigin] : [])
+];
 
 app.use(cors({
   origin(origin, callback) {
@@ -38,7 +60,9 @@ app.use(cors({
     if (!origin || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    return callback(new Error(`CORS origin not allowed: ${origin}`));
+    // Never turn a CORS decision into a 500 HTML error page: that breaks static
+    // assets and produces a blank page. Omitting the ACAO header is enough.
+    return callback(null, false);
   }
 }));
 
