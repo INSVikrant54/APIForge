@@ -3,6 +3,7 @@ import Header from './components/Header.jsx';
 import Sidebar from './components/Sidebar.jsx';
 import ConfigPanel from './components/ConfigPanel.jsx';
 import OpenApiImportPanel from './components/OpenApiImportPanel.jsx';
+import PostmanImportPanel from './components/PostmanImportPanel.jsx';
 import TestSuitePanel from './components/TestSuitePanel.jsx';
 import FailureDetailModal from './components/FailureDetailModal.jsx';
 import RegressionExportModal from './components/RegressionExportModal.jsx';
@@ -83,6 +84,7 @@ export default function App() {
   const [testSuite, setTestSuite] = useState(null);
   const [customRequestStarted, setCustomRequestStarted] = useState(false);
   const [openApiImportOpen, setOpenApiImportOpen] = useState(false);
+  const [postmanImportOpen, setPostmanImportOpen] = useState(false);
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem('apiforge_theme');
     return saved === 'light' ? 'light' : 'dark';
@@ -287,7 +289,19 @@ export default function App() {
     setSummary(null);
     setTestSuite(null);
     setCustomRequestStarted(false);
+    setPostmanImportOpen(false);
     setOpenApiImportOpen(true);
+  };
+
+  const handleOpenPostmanImport = () => {
+    setPlanError(null);
+    setBanner(null);
+    setResults(null);
+    setSummary(null);
+    setTestSuite(null);
+    setCustomRequestStarted(false);
+    setOpenApiImportOpen(false);
+    setPostmanImportOpen(true);
   };
 
   const handleChooseOpenApiEndpoint = (endpoint) => {
@@ -361,6 +375,43 @@ export default function App() {
     setSummary(null);
     setPlanError(null);
     setOpenApiImportOpen(false);
+    setCustomRequestStarted(true);
+    setCurrentTab('lab');
+  };
+
+  // Postman requests are imported verbatim: {{variables}} stay as placeholders
+  // and the shared resolver replaces them with the selected environment's values.
+  const handleChoosePostmanRequest = (request) => {
+    const body = request.request?.body;
+    const rules = [
+      request.apiTitle ? `Collection: ${request.apiTitle}` : '',
+      request.summary ? `Request: ${request.summary}` : '',
+      'Postman import: scripts were not executed. Confirm the target URL, headers, body and expected status before generating tests.'
+    ].filter(Boolean).join('\n');
+
+    setConfig({
+      ...config,
+      method: request.method || 'GET',
+      path: request.path || '',
+      expectedStatus: '',
+      expectedStatusCodes: [],
+      expectedStatusReviewRequired: true,
+      importMetadata: {
+        source: 'postman',
+        apiTitle: request.apiTitle,
+        operationId: request.operationId,
+        requiresReview: true
+      },
+      headers: request.request?.headers || {},
+      body: body == null ? '' : (typeof body === 'string' ? body : JSON.stringify(body, null, 2)),
+      sampleResponse: '',
+      businessRules: rules
+    });
+    setTestSuite(null);
+    setResults(null);
+    setSummary(null);
+    setPlanError(null);
+    setPostmanImportOpen(false);
     setCustomRequestStarted(true);
     setCurrentTab('lab');
   };
@@ -494,6 +545,7 @@ export default function App() {
     setSummary(null);
     setCustomRequestStarted(false);
     setOpenApiImportOpen(false);
+    setPostmanImportOpen(false);
     setPlanError(null);
     setBanner(null);
     setInspectingFailure(null);
@@ -528,10 +580,10 @@ export default function App() {
           onLoadDemo={handleLoadDemo}
           loading={loadingPlan || runningTests}
           customRequestActive={customRequestStarted}
-          importActive={openApiImportOpen}
+          importActive={openApiImportOpen || postmanImportOpen}
           theme={theme}
           onChangeTheme={setTheme}
-          showBack={currentTab === 'lab' && (Boolean(testSuite) || customRequestStarted || openApiImportOpen)}
+          showBack={currentTab === 'lab' && (Boolean(testSuite) || customRequestStarted || openApiImportOpen || postmanImportOpen)}
           onBack={handleBackToStart}
         />
 
@@ -549,6 +601,8 @@ export default function App() {
           {currentTab === 'lab' && (
             openApiImportOpen ? (
               <OpenApiImportPanel onChooseEndpoint={handleChooseOpenApiEndpoint} />
+            ) : postmanImportOpen ? (
+              <PostmanImportPanel onChooseRequest={handleChoosePostmanRequest} />
             ) : (!testSuite && !customRequestStarted) ? (
               <div className="start-workspace">
                 <section className="start-copy">
@@ -571,6 +625,7 @@ export default function App() {
                       className="btn btn-secondary"
                       onClick={() => {
                         setOpenApiImportOpen(false);
+                        setPostmanImportOpen(false);
                         setConfig(prev => ({ ...prev, path: '' }));
                         setCustomRequestStarted(true);
                       }}
@@ -583,6 +638,13 @@ export default function App() {
                       onClick={handleOpenApiImport}
                     >
                       Import OpenAPI
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={handleOpenPostmanImport}
+                    >
+                      Import Postman
                     </button>
                   </div>
                 </section>

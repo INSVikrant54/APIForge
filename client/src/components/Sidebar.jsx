@@ -93,7 +93,7 @@ export default function Sidebar({
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span>Local workspace</span>
-          <span>v1.7.0</span>
+          <span>v1.8.0</span>
         </div>
         {activeModel && (
           <div

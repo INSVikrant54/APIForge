@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Copy, Check, Download, FileCode } from 'lucide-react';
 import { generateJestSuite } from '../utils/exportJest.js';
 import { generatePytestSuite } from '../utils/exportPytest.js';
+import { generatePostmanCollection } from '../utils/exportPostman.js';
 import { redactSecrets } from '../../../server/utils/environmentResolver.js';
 
 export default function RegressionExportModal({
@@ -10,7 +11,7 @@ export default function RegressionExportModal({
   secretValues = [],
   onClose
 }) {
-  const [format, setFormat] = useState('jest'); // 'jest' | 'pytest'
+  const [format, setFormat] = useState('jest'); // 'jest' | 'pytest' | 'postman'
   const [failuresOnly, setFailuresOnly] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -45,9 +46,15 @@ export default function RegressionExportModal({
 
   const generatedCode = format === 'jest'
     ? generateJestSuite(filteredSuite, safeResults)
-    : generatePytestSuite(filteredSuite, safeResults);
+    : format === 'pytest'
+      ? generatePytestSuite(filteredSuite, safeResults)
+      : JSON.stringify(generatePostmanCollection(filteredSuite, safeResults, secretValues), null, 2);
 
-  const fileName = format === 'jest' ? 'api_regression.test.js' : 'test_api_regression.py';
+  const fileName = format === 'jest'
+    ? 'api_regression.test.js'
+    : format === 'pytest'
+      ? 'test_api_regression.py'
+      : 'api_regression.postman_collection.json';
 
   const handleCopy = () => {
     navigator.clipboard.writeText(generatedCode);
@@ -179,6 +186,21 @@ export default function RegressionExportModal({
               }}
             >
               Pytest (Python)
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={format === 'postman'}
+              onClick={() => setFormat('postman')}
+              className="btn btn-sm"
+              style={{
+                background: format === 'postman' ? 'var(--accent-cyan)' : 'var(--bg-card)',
+                color: format === 'postman' ? '#000' : 'var(--text-muted)',
+                border: '1px solid var(--border-subtle)',
+                fontWeight: format === 'postman' ? 600 : 500
+              }}
+            >
+              Postman v2.1
             </button>
           </div>
 

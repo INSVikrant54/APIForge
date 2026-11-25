@@ -3,7 +3,7 @@
 > 🏆 **Hacktoberfest Track Winner — Best Use of Gemma 4**
 
 [![CI](https://github.com/INSVikrant54/APIForge/actions/workflows/ci.yml/badge.svg)](https://github.com/INSVikrant54/APIForge/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-1.7.0-blue.svg)](https://github.com/INSVikrant54/APIForge/releases)
+[![Version](https://img.shields.io/badge/version-1.8.0-blue.svg)](https://github.com/INSVikrant54/APIForge/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 APIForge is a developer workbench for finding API edge cases. Google Gemini or Gemma models propose tests; a **deterministic backend execution engine** sends real HTTP requests and evaluates the results.
@@ -181,7 +181,7 @@ APIForge is an interactive developer workbench, not an opaque black box:
 
 ## 📥 OpenAPI / Swagger Import
 
-APIForge can read an **OpenAPI 3.0.x** or **Swagger 2.0** contract supplied as JSON or YAML and turn its operations into test-plan-ready endpoint descriptors. This was the first Phase 1 capability to ship; named environments, variables, and authentication helpers followed in v1.7.0. Postman interoperability and request chaining remain unimplemented.
+APIForge can read an **OpenAPI 3.0.x** or **Swagger 2.0** contract supplied as JSON or YAML and turn its operations into test-plan-ready endpoint descriptors. This was the first Phase 1 capability to ship; named environments, variables, and authentication helpers followed in v1.7.0, and Postman Collection v2.1 interoperability arrived in v1.8.0. Request chaining remains unimplemented.
 
 ### Supported scope
 
@@ -216,6 +216,17 @@ A successful response is `{ "success": true, "data": [ ...endpoints ] }`. Malfor
 - Only local `#/...` JSON-pointer `$ref`s inside the pasted document are resolved. **External references (remote URLs or other files) are never fetched** — they are rejected, as are unresolved refs, unsafe pointer tokens, and refs beyond the depth/node caps. Cyclic refs are bounded rather than followed indefinitely.
 - Imported contracts are treated as data only: YAML is parsed with a `core` schema (no custom tags or executable constructs), no script from a spec is executed, and only explicit numeric 2xx codes are used as expected successes.
 - A spec's base URL (`servers` / `host`) is captured verbatim, never substituted from variables, and flagged for review when it is a template or not HTTP(S). **Local and private API targets remain blocked** by the SSRF guard, including hostnames that resolve to private ranges; only APIForge's built-in demo API is exempt. A base URL in a spec does not bypass those checks.
+
+---
+
+## 📦 Postman Collection v2.1 Import & Export
+
+v1.8.0 adds Postman interoperability. Choose **Import Postman** on the start screen to paste or upload a Collection v2.1 JSON file, then select one request to pre-fill the endpoint. Requests are also exported from the regression suite's **Postman v2.1** tab alongside Jest and Pytest.
+
+- **Strict version check:** only Collection v2.1 is accepted. A v1.0 collection is rejected with an explicit instruction to re-export as v2.1; unknown versions and non-JSON input get equally clear errors.
+- **Bounds:** collections are capped at **1 MiB** and **50 requests**, with per-request header and body limits. Folders are flattened within a depth cap. Oversized input is rejected, not silently truncated.
+- **Data only:** Postman `event` scripts are never executed. `{{variable}}` placeholders in URLs, headers, and bodies are preserved and resolved later by the selected environment — the same resolver used by the OpenAPI, CLI, and runner paths. Imported requests are marked for review; no expected status code is invented.
+- **Export safety:** generated collections are redacted twice (in the export modal and in the exporter). Literal `Authorization`, `Cookie`, `Set-Cookie`, and `X-Gemini-API-Key` values are dropped; templated values such as `Bearer {{token}}` are kept. Exports carry a `baseUrl` collection variable placeholder and never contain session secrets.
 
 ---
 
