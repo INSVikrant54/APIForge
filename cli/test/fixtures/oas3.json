@@ -1,0 +1,60 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Pet Store",
+    "version": "1.0.0"
+  },
+  "servers": [
+    { "url": "https://api.example.com/v1" }
+  ],
+  "paths": {
+    "/pets/{petId}": {
+      "get": {
+        "summary": "Get pet by id",
+        "operationId": "getPet",
+        "parameters": [
+          {
+            "name": "petId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "OK" }
+        }
+      }
+    },
+    "/pets": {
+      "post": {
+        "summary": "Create pet",
+        "operationId": "createPet",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": { "type": "string" }
+                }
+              },
+              "example": { "name": "Rex" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Created" }
+        }
+      }
+    },
+    "/unclear": {
+      "get": {
+        "summary": "Unclear response contract",
+        "responses": {
+          "404": { "description": "Missing" }
+        }
+      }
+    }
+  }
+}

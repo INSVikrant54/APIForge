@@ -20,6 +20,7 @@
       <nav class="nav-links" aria-label="Primary">
         <a href="#quickstart" class="hide-mobile">Quickstart</a>
         <a href="#import" class="hide-mobile">Import</a>
+        <a href="#cli" class="hide-mobile">CLI</a>
         <a href="#categories" class="hide-mobile">Categories</a>
         <a href="#compare" class="hide-mobile">Compare</a>
         <a href="https://github.com/INSVikrant54/APIForge" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">GitHub</a>
@@ -31,7 +32,7 @@
     <section class="hero">
       <div class="container hero-grid">
         <div>
-          <span class="kicker">OPEN SOURCE · MIT LICENSE · v1.4.0</span>
+          <span class="kicker">OPEN SOURCE · MIT LICENSE · v1.5.0</span>
           <h1>Find out how your API really behaves.</h1>
           <p class="hero-sub">
             Gemini or Gemma models propose edge cases from plain-English business rules — or import an OpenAPI 3.0.x / Swagger 2.0 spec to start from an existing contract.
@@ -132,8 +133,37 @@ Use safe demo</pre>
           </div>
         </div>
         <p style="margin-top: 18px; color: var(--text-muted); font-size: 0.85rem;">
-          Import is the only Phase 1 slice shipped in v1.4.0. Environments and variables, auth helpers, Postman import/export, request chaining, and a CLI are not part of this release.
+          Import was the first Phase 1 slice shipped in v1.4.0. v1.5.0 adds the Phase 2 CLI and versioned suite files. Environments and variables, auth helpers, Postman import/export, and request chaining remain open.
         </p>
+      </div>
+    </section>
+
+    <section id="cli" class="section">
+      <div class="container">
+        <div class="section-header">
+          <h2>Run verification from the terminal</h2>
+          <p>The v1.5.0 CLI reuses the same deterministic runner as the web workspace, so a passing suite in the browser behaves the same in CI. From a clone, prefix each command below with <code>npm run cli --</code>; the <code>apiforge</code> binary becomes available after npm publication.</p>
+        </div>
+        <div class="steps-grid">
+          <div class="card">
+            <div class="card-num">01 · CONFIGURE</div>
+            <h3>Start from a config</h3>
+            <p>Create <code>apiforge.config.json</code> with a target URL and named environment. Secret values stay as variables, never as literal config values.</p>
+            <pre class="code-snippet">apiforge init --target https://api.example.com --env staging --yes</pre>
+          </div>
+          <div class="card">
+            <div class="card-num">02 · IMPORT</div>
+            <h3>Version a suite file</h3>
+            <p>Import an OpenAPI or Swagger document into a versioned suite file that can be committed to git alongside the service it verifies.</p>
+            <pre class="code-snippet">apiforge import openapi.yaml --out apiforge.suite.json</pre>
+          </div>
+          <div class="card">
+            <div class="card-num">03 · RUN IN CI</div>
+            <h3>Machine-readable results</h3>
+            <p>Run against an environment and emit text, JSON, JUnit XML, or SARIF. Exit codes distinguish pass, failure/review, and execution errors.</p>
+            <pre class="code-snippet">apiforge run apiforge.suite.json --env staging --ci --format junit</pre>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -245,7 +275,7 @@ Use safe demo</pre>
 
   <footer class="footer">
     <div class="container footer-inner">
-      <span>APIForge v1.4.0 · Open source (MIT) · Deterministic API verification</span>
+      <span>APIForge v1.5.0 · Open source (MIT) · Deterministic API verification</span>
       <div class="footer-links">
         <a href="https://github.com/INSVikrant54/APIForge" target="_blank" rel="noopener noreferrer">GitHub</a>
         <a href="https://github.com/INSVikrant54/APIForge/blob/main/README.md" target="_blank" rel="noopener noreferrer">README</a>

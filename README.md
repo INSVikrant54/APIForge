@@ -3,7 +3,7 @@
 > 🏆 **Hacktoberfest Track Winner — Best Use of Gemma 4**
 
 [![CI](https://github.com/INSVikrant54/APIForge/actions/workflows/ci.yml/badge.svg)](https://github.com/INSVikrant54/APIForge/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-1.4.0-blue.svg)](https://github.com/INSVikrant54/APIForge/releases)
+[![Version](https://img.shields.io/badge/version-1.5.0-blue.svg)](https://github.com/INSVikrant54/APIForge/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 APIForge is a developer workbench for finding API edge cases. Google Gemini or Gemma models propose tests; a **deterministic backend execution engine** sends real HTTP requests and evaluates the results.
@@ -16,6 +16,7 @@ Developers provide an API endpoint, a sample payload, and business rules written
 
 - **Adversarial edge-case synthesis:** Uses Google Gemini or Gemma models through the official `@google/genai` SDK; the default is `gemini-3.5-flash-lite`.
 - **OpenAPI / Swagger import:** Paste or upload an OpenAPI 3.0.x or Swagger 2.0 JSON/YAML spec to pre-fill operations, parameters, sample bodies, and the success status codes declared in the contract. See [OpenAPI / Swagger Import](#-openapi--swagger-import).
+- **Phase 2 CLI:** Create a config, import a spec into a versioned suite file, and run suites from the terminal with text, JSON, JUnit XML, or SARIF output. See [Phase 2 CLI](#-phase-2-cli).
 - **Deterministic Verification Engine:** Never relies on LLMs to hallucinate pass/fail results. Real HTTP requests are executed against the target server, and responses are verified by a strict assertion engine.
 - **Human-in-the-Loop Developer Control:** Inspect, edit, and fine-tune request payloads, headers, and expected assertions before firing a single request.
 - **Review before execution:** Marks ambiguous expectations for confirmation before those tests run.
@@ -43,6 +44,7 @@ Developers provide an API endpoint, a sample payload, and business rules written
 - [Environment Variables](#-environment-variables)
 - [Running the Application](#-running-the-application)
 - [Quickstart](#-quickstart)
+- [Phase 2 CLI](#-phase-2-cli)
 - [Regression Test Export (Jest & Pytest)](#-regression-test-export-jest--pytest)
 - [License](#-license)
 
@@ -177,7 +179,7 @@ APIForge is an interactive developer workbench, not an opaque black box:
 
 ## 📥 OpenAPI / Swagger Import
 
-APIForge can read an **OpenAPI 3.0.x** or **Swagger 2.0** contract supplied as JSON or YAML and turn its operations into test-plan-ready endpoint descriptors. This is the first Phase 1 capability to ship; it does **not** mean that the rest of Phase 1 (environments and variables, auth helpers, Postman interoperability, request chaining, CLI) is available.
+APIForge can read an **OpenAPI 3.0.x** or **Swagger 2.0** contract supplied as JSON or YAML and turn its operations into test-plan-ready endpoint descriptors. This was the first Phase 1 capability to ship. The Phase 2 CLI can also import a spec into a versioned suite file, but the rest of Phase 1 (shared environments and variables, auth helpers, Postman interoperability, and request chaining) remains unimplemented.
 
 ### Supported scope
 
@@ -246,7 +248,7 @@ Because APIForge executes HTTP requests on behalf of users, it applies network a
 ## 🚀 Getting Started & Installation
 
 ### Prerequisites
-- **Node.js:** v20 or higher (the version used in CI and the production container)
+- **Node.js:** v20 or higher locally; CI runs on Node 24 and the production container uses Node 20
 - **npm:** v9.0.0 or higher
 
 ### 1. Clone the repository
@@ -321,6 +323,69 @@ npm run dev:client
 7. **Export:** Click **Export** to download Jest/Pytest regression suites for CI.
 
 **For your own API:** Choose **Test my API**, enter a public endpoint and rules, then click **Generate Test Plan**. The selected Gemini or Gemma model proposes edge cases across 7 categories. Alternatively, choose **Import OpenAPI** to start from an OpenAPI 3.0.x or Swagger 2.0 JSON/YAML spec and pre-fill operations and expected status codes. Private and local network targets are blocked except for the built-in demo.
+
+---
+
+## 🧰 Phase 2 CLI
+
+The CLI ships as part of **v1.5.0**. It reuses the same deterministic runner as the web workspace, so terminal and CI verdicts match browser results. The npm package is not published yet; run it from a clone:
+
+```bash
+npm run cli -- --help
+# or
+node cli/index.js --help
+```
+
+### Create a config
+
+```bash
+npm run cli -- init --target https://api.example.com --env staging --yes
+```
+
+This writes `apiforge.config.json` with a named environment placeholder. It does not store secret values — use variables in the suite file for secrets.
+
+### Import a spec into a suite
+
+```bash
+npm run cli -- import openapi.yaml --out apiforge.suite.json --name "Pets API"
+```
+
+Each supported operation becomes a deterministic test in a versioned suite file (`schemaVersion: 1`). Only explicit 2xx codes from the contract become expected statuses; operations without one are marked for review instead of receiving an invented `200`. Operations with unresolved `{pathParam}` templates are also marked for review until a concrete value is supplied.
+
+### Run a suite
+
+```bash
+npm run cli -- run apiforge.suite.json --env staging
+npm run cli -- run apiforge.suite.json --env staging --ci --format junit --output apiforge-results.xml
+```
+
+`{{variable}}` placeholders in request paths, headers, and JSON body strings are substituted from the selected environment. Exit codes are `0` when all tests pass, `1` for failures or unconfirmed review cases, and `2` for configuration, parse, or execution errors.
+
+Supported `--format` values:
+
+| Format | Use |
+| :--- | :--- |
+| `text` | Default human-readable summary. |
+| `json` | Structured machine-readable report on stdout or in `--output`. |
+| `junit` | JUnit XML for GitHub Actions, GitLab CI, and Jenkins. |
+| `sarif` | SARIF 2.1.0 for the GitHub Security tab. |
+
+`--ci` forces non-interactive output and defaults to `junit` when no format is given.
+
+### GitHub Action wrapper
+
+A local composite action is included at `.github/actions/apiforge`:
+
+```yaml
+- uses: ./.github/actions/apiforge
+  with:
+    suite: apiforge.suite.json
+    env: staging
+    format: junit
+    output: apiforge-results.xml
+```
+
+Publishing `apiforge` to npm and a standalone `apiforge/action@v1` repository remain external release tasks; the local CLI and local action are ready to use now.
 
 ---
 
