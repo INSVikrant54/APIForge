@@ -7,8 +7,9 @@ import demoApiRoutes from './routes/demoApi.js';
 import analyzeRoutes from './routes/analyze.js';
 import runnerRoutes from './routes/runner.js';
 import explainRoutes from './routes/explain.js';
+import openApiRoutes from './routes/openApi.js';
 import { verifyApiKey } from './services/gemmaService.js';
-import { analyzeLimiter, explainLimiter, verifyKeyLimiter } from './middleware/rateLimiter.js';
+import { analyzeLimiter, explainLimiter, openApiImportLimiter, verifyKeyLimiter } from './middleware/rateLimiter.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -40,6 +41,9 @@ app.use(cors({
     return callback(new Error(`CORS origin not allowed: ${origin}`));
   }
 }));
+
+// Parse OpenAPI uploads separately so a source near 1 MiB can fit inside its JSON wrapper.
+app.use('/api/openapi', openApiImportLimiter, express.json({ limit: '3mb' }), openApiRoutes);
 app.use(express.json({ limit: '1mb' }));
 
 // Basic health check route

@@ -21,9 +21,35 @@ export default function ConfigPanel({
   const [beautified, setBeautified] = useState(false);
   const isMac = typeof navigator !== 'undefined' && /Mac/i.test(navigator.platform || navigator.userAgent || '');
 
+  const updateEndpointConfig = (patch) => {
+    const keys = Object.keys(patch);
+    const pathOnly = keys.length === 1 && keys[0] === 'path';
+
+    if (pathOnly) {
+      const metadata = config.importMetadata
+        ? {
+            ...config.importMetadata,
+            serverNeedsReview: false,
+            serverBaseUrl: '',
+            parameterNeedsReview: false,
+            unresolvedParameters: []
+          }
+        : undefined;
+      onChangeConfig({ ...config, ...patch, importMetadata: metadata });
+      return;
+    }
+
+    const {
+      expectedStatusCodes,
+      expectedStatusReviewRequired,
+      importMetadata,
+      ...baseConfig
+    } = config;
+    onChangeConfig({ ...baseConfig, ...patch });
+  };
+
   const handleMethodChange = (method) => {
-    onChangeConfig({
-      ...config,
+    updateEndpointConfig({
       method,
       expectedStatus: method === 'POST' ? 201 : 200
     });
@@ -204,7 +230,7 @@ export default function ConfigPanel({
             className="form-input"
             style={{ flex: 1, fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}
             value={config.path}
-            onChange={(e) => onChangeConfig({ ...config, path: e.target.value })}
+            onChange={(e) => updateEndpointConfig({ path: e.target.value })}
             onKeyDown={handleFormKeyDown}
             placeholder="/api/demo/orders or https://api.yoursite.com/orders"
             aria-label="Target Endpoint URL"
@@ -216,8 +242,8 @@ export default function ConfigPanel({
               type="number"
               className="form-input"
               style={{ width: '100%', textAlign: 'center', fontFamily: 'var(--font-mono)' }}
-              value={config.expectedStatus}
-              onChange={(e) => onChangeConfig({ ...config, expectedStatus: Number(e.target.value) })}
+              value={config.expectedStatus ?? ''}
+              onChange={(e) => updateEndpointConfig({ expectedStatus: e.target.value === '' ? '' : Number(e.target.value) })}
               onKeyDown={handleFormKeyDown}
               title="Expected Success Status Code"
               aria-label="Expected Success Status Code"
@@ -228,6 +254,18 @@ export default function ConfigPanel({
           Absolute local and private URLs (localhost, 127.0.0.1, LAN, cloud metadata) are blocked by the SSRF guard.
           Relative <code style={{ fontFamily: 'var(--font-mono)' }}>/api/demo/...</code> paths run against this app&apos;s sandbox.
         </p>
+        {Array.isArray(config.expectedStatusCodes) && config.expectedStatusCodes.length > 0 && (
+          <p className="form-hint" role="status">
+            Imported success responses: {config.expectedStatusCodes.join(', ')}. These are used when generating tests.
+          </p>
+        )}
+        {(config.expectedStatusReviewRequired || config.importMetadata?.serverNeedsReview) && (
+          <p className="openapi-review-hint" role="status">
+            {config.expectedStatusReviewRequired && !config.expectedStatusCodes?.length
+              ? 'The specification does not declare a success response. Confirm the expected status before running tests.'
+              : 'Review the imported server URL before running tests.'}
+          </p>
+        )}
       </div>
 
       {/* Tabs: Request Body | Headers | Sample Response */}

@@ -35,6 +35,19 @@ export async function verifyApiKeyApi({ apiKey, model }) {
   return res.json();
 }
 
+export async function parseOpenApiSpecApi(source) {
+  const res = await fetch('/api/openapi/parse', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ source })
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || `Could not parse API specification (HTTP ${res.status})`);
+  }
+  return data.data;
+}
+
 export async function generateTestPlanApi(config, aiSettings = null) {
   const headers = { 'Content-Type': 'application/json' };
   
