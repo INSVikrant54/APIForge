@@ -6,6 +6,7 @@
  */
 
 import { applyParameterExamples } from './openApiParams.js';
+import { extractSchemaConstraints } from '../../../server/utils/schemaConstraints.js';
 
 export function buildConfigFromEndpoint(config, endpoint) {
   const expectedStatusCodes = Array.isArray(endpoint.expected?.statusCodes)
@@ -40,6 +41,9 @@ export function buildConfigFromEndpoint(config, endpoint) {
     const description = parameter.description ? ` — ${parameter.description}` : '';
     return `- ${parameter.in} parameter "${parameter.name}"${required}${description}${example}`;
   });
+  const constraints = endpoint.requestBody?.schema
+    ? extractSchemaConstraints(endpoint.requestBody.schema)
+    : [];
   const rules = [
     endpoint.apiTitle ? `API: ${endpoint.apiTitle}` : '',
     endpoint.summary || endpoint.description,
@@ -47,7 +51,7 @@ export function buildConfigFromEndpoint(config, endpoint) {
     ...(parameterNeedsReview
       ? [`Unresolved path parameters: ${unresolved.join(', ')}. Provide concrete values before running.`]
       : []),
-    endpoint.requestBody?.schema ? `Request body schema: ${JSON.stringify(endpoint.requestBody.schema)}` : ''
+    ...(constraints.length ? ['Request body constraints (smart defaults):', ...constraints] : [])
   ].filter(Boolean).join('\n');
   const body = endpoint.request?.body;
 

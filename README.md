@@ -3,7 +3,7 @@
 > 🏆 **Hacktoberfest Track Winner — Best Use of Gemma 4**
 
 [![CI](https://github.com/INSVikrant54/APIForge/actions/workflows/ci.yml/badge.svg)](https://github.com/INSVikrant54/APIForge/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-1.9.0-blue.svg)](https://github.com/INSVikrant54/APIForge/releases)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/INSVikrant54/APIForge/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 APIForge is a developer workbench for finding API edge cases. Google Gemini or Gemma models propose tests; a **deterministic backend execution engine** sends real HTTP requests and evaluates the results.
@@ -181,7 +181,7 @@ APIForge is an interactive developer workbench, not an opaque black box:
 
 ## 📥 OpenAPI / Swagger Import
 
-APIForge can read an **OpenAPI 3.0.x** or **Swagger 2.0** contract supplied as JSON or YAML and turn its operations into test-plan-ready endpoint descriptors. This was the first Phase 1 capability to ship; named environments, variables, and authentication helpers followed in v1.7.0, Postman Collection v2.1 interoperability arrived in v1.8.0, and bounded multi-endpoint batch runs in v1.9.0. Request chaining remains unimplemented.
+APIForge can read an **OpenAPI 3.0.x** or **Swagger 2.0** contract supplied as JSON or YAML and turn its operations into test-plan-ready endpoint descriptors. This was the first Phase 1 capability to ship; named environments, variables, and authentication helpers followed in v1.7.0, Postman Collection v2.1 interoperability arrived in v1.8.0, bounded multi-endpoint batch runs in v1.9.0, and bounded schema-derived smart defaults in v2.0.0. Request chaining remains unimplemented.
 
 ### Supported scope
 
@@ -238,6 +238,17 @@ v1.9.0 lets you select several operations after an OpenAPI import and run them a
 - **Paced:** a client-side gate spaces analysis and execution calls to one every six seconds (ten per minute, sliding window). This is additive to the server's existing limiters — none were relaxed. Endpoints run strictly one at a time.
 - **Resilient:** a failure in one endpoint is recorded in its tab and the remaining endpoints still run. Navigating away cancels the in-flight batch.
 - **Safe:** results are redacted with the selected environment's secret list before they reach the batch view; environment variables and auth helpers apply to every endpoint in the batch. SSRF, timeout clamping, and demo isolation are unchanged.
+
+---
+
+## 🧠 Bounded Smart Defaults
+
+v2.0.0 replaces the raw request-schema dump in generated business rules with a bounded set of readable constraints extracted from the imported OpenAPI request body schema.
+
+- The extractor is a pure, dependency-free helper shared by the client and server. It surfaces required fields, types, formats, enums, numeric/length bounds, patterns, and short descriptions as plain lines such as `body.limit: integer, min 1, max 100`.
+- Output is capped at **20 constraints**, with depth, node, and text-size caps as well; oversized schemas get a `(further constraints omitted)` note instead of an unbounded prompt payload.
+- Example and default **values** are omitted for fields whose names look sensitive (`password`, `secret`, `token`, `apiKey`, `credential`, `authorization`). No credentials from a schema are sent to the model.
+- Single-endpoint imports and batch imports use the same adapter, so both receive identical, bounded business rules. The model still proposes cases; the deterministic runner still decides pass/fail.
 
 ---
 
