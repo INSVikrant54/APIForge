@@ -1,6 +1,6 @@
 {
   "name": "apiforge-monorepo",
-  "version": "1.5.0",
+  "version": "2.0.0",
   "description": "APIForge — AI-Powered API Behavior Verification & Debugging Platform",
   "private": true,
   "type": "module",
@@ -14,7 +14,7 @@
     "start": "npm --prefix server start",
     "build": "npm --prefix client run build",
     "cli": "node cli/index.js",
-    "test:cli": "node --test cli/test/import.test.js cli/test/output.test.js cli/test/run.test.js cli/test/suite.test.js cli/test/variables.test.js",
+    "test:cli": "node --test cli/test/environments.test.js cli/test/import.test.js cli/test/output.test.js cli/test/run.test.js cli/test/suite.test.js cli/test/variables.test.js",
     "install:all": "npm install && npm --prefix server install && npm --prefix client install"
   },
   "devDependencies": {

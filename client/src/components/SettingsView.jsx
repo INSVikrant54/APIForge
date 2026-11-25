@@ -1,7 +1,18 @@
 import React from 'react';
 import { Settings, Cpu, Shield, Key } from 'lucide-react';
+import AuthConfigPanel from './AuthConfigPanel.jsx';
 
-export default function SettingsView({ health, aiSettings, onOpenAiSettings, timeoutMs, onChangeTimeout }) {
+export default function SettingsView({
+  health,
+  aiSettings,
+  onOpenAiSettings,
+  timeoutMs,
+  onChangeTimeout,
+  authConfig,
+  variableNames,
+  environmentName,
+  onChangeAuth
+}) {
   const isCustomKey = aiSettings && !aiSettings.useServerKey && aiSettings.customKey;
   const isServerConfigured = health?.aiConfigured;
   const activeModel = aiSettings?.model || health?.model || 'gemini-3.5-flash-lite';
@@ -41,6 +52,13 @@ export default function SettingsView({ health, aiSettings, onOpenAiSettings, tim
             </p>
           </div>
         </div>
+
+        <AuthConfigPanel
+          auth={authConfig}
+          variableNames={variableNames}
+          environmentName={environmentName}
+          onChange={onChangeAuth}
+        />
 
         <div style={{ background: 'var(--bg-surface)', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>

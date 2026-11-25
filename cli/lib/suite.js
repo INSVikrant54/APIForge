@@ -4,6 +4,12 @@
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
+import {
+  getSecretValues,
+  getVariableValues,
+  normalizeVariables as normalizeVariableRecords,
+  resolveEnvironment as resolveEnvironmentShared
+} from '../../server/utils/environmentResolver.js';
 
 export const SCHEMA_VERSION = 1;
 export const DEFAULT_SUITE_NAME = 'APIForge Suite';
@@ -28,14 +34,14 @@ export function makeTestId(endpoint, index = 0) {
   return `${prefix}${slug}-${String(index + 1).padStart(3, '0')}`;
 }
 
+/** Plain name -> value view (records are normalized by the shared resolver). */
 function normalizeVariables(input) {
-  const out = {};
-  if (!input || typeof input !== 'object' || Array.isArray(input)) return out;
-  for (const [key, value] of Object.entries(input)) {
-    if (value === null || value === undefined) continue;
-    if (['string', 'number', 'boolean'].includes(typeof value)) out[key] = value;
-  }
-  return out;
+  return getVariableValues(normalizeVariableRecords(input));
+}
+
+/** Record view, retaining `{ value, secret }` metadata for redaction. */
+function normalizeVariableMetadata(input) {
+  return normalizeVariableRecords(input);
 }
 
 function normalizeHeaders(input) {
@@ -111,7 +117,7 @@ export function createSuite({
     environments: {
       [DEFAULT_ENVIRONMENT]: {
         targetBaseUrl: typeof targetBaseUrl === 'string' ? targetBaseUrl : '',
-        variables: normalizeVariables(variables)
+        variables: normalizeVariableMetadata(variables)
       }
     },
     environment: DEFAULT_ENVIRONMENT,
@@ -139,10 +145,11 @@ export function normalizeSuite(raw) {
     : {};
   const environments = {};
   for (const [envName, env] of Object.entries(rawEnvironments)) {
-    if (!env || typeof env !== 'object' || Array.isArray(env)) continue;
+    if (typeof env !== 'string' && (!env || typeof env !== 'object' || Array.isArray(env))) continue;
+    const normalized = resolveEnvironmentShared(rawEnvironments, envName, envName);
     environments[envName] = {
-      targetBaseUrl: typeof env.targetBaseUrl === 'string' ? env.targetBaseUrl : '',
-      variables: normalizeVariables(env.variables)
+      targetBaseUrl: normalized.targetBaseUrl,
+      variables: normalized.variables
     };
   }
   if (Object.keys(environments).length === 0) {
@@ -162,20 +169,31 @@ export function normalizeSuite(raw) {
   return { schemaVersion: SCHEMA_VERSION, name, environments, environment, tests };
 }
 
-/** Resolve an environment by name, with variables normalized. */
+/** Resolve an environment by name, with variables as plain values. */
 export function resolveEnvironment(suite, name) {
+  const details = resolveEnvironmentDetails(suite, name);
+  return {
+    name: details.name,
+    targetBaseUrl: details.targetBaseUrl,
+    variables: details.variables
+  };
+}
+
+/**
+ * Resolve an environment with both plain values and secret metadata. The
+ * latter drives CLI output redaction; the former drives substitution.
+ */
+export function resolveEnvironmentDetails(suite, name) {
   if (!suite || typeof suite !== 'object') throw new Error('Suite must be a loaded suite object');
   const all = suite.environments && typeof suite.environments === 'object' ? suite.environments : {};
-  const envName = typeof name === 'string' && name.trim() ? name.trim() : (suite.environment || DEFAULT_ENVIRONMENT);
-  const env = all[envName];
-  if (!env || typeof env !== 'object' || Array.isArray(env)) {
-    const available = Object.keys(all).join(', ') || '(none)';
-    throw new Error(`Environment "${envName}" is not defined. Available environments: ${available}`);
-  }
+  const fallback = suite.environment || DEFAULT_ENVIRONMENT;
+  const env = resolveEnvironmentShared(all, name, fallback);
   return {
-    name: envName,
-    targetBaseUrl: typeof env.targetBaseUrl === 'string' ? env.targetBaseUrl : '',
-    variables: normalizeVariables(env.variables)
+    name: env.name,
+    targetBaseUrl: env.targetBaseUrl,
+    variables: getVariableValues(env.variables),
+    variableRecords: env.variables,
+    secretValues: getSecretValues(env.variables)
   };
 }
 

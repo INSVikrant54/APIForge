@@ -6,8 +6,9 @@
 
 export function parseArgs(argv = [], options = {}) {
   const valueFlags = new Set(options.valueFlags || []);
+  const multiValueFlags = new Set(options.multiValueFlags || []);
   const booleanFlags = new Set(options.booleanFlags || []);
-  const knownFlags = new Set([...valueFlags, ...booleanFlags, 'help', 'version']);
+  const knownFlags = new Set([...valueFlags, ...multiValueFlags, ...booleanFlags, 'help', 'version']);
   const flags = {};
   const positionals = [];
 
@@ -35,15 +36,20 @@ export function parseArgs(argv = [], options = {}) {
       continue;
     }
 
-    if (valueFlags.has(name)) {
-      if (inlineValue !== undefined) {
-        flags[name] = inlineValue;
-        continue;
+    if (valueFlags.has(name) || multiValueFlags.has(name)) {
+      let value = inlineValue;
+      if (value === undefined) {
+        if (i + 1 >= argv.length || isKnownFlag(argv[i + 1], knownFlags)) {
+          throw new Error(`Missing value for --${name}`);
+        }
+        value = argv[++i];
       }
-      if (i + 1 >= argv.length || isKnownFlag(argv[i + 1], knownFlags)) {
-        throw new Error(`Missing value for --${name}`);
+      if (multiValueFlags.has(name)) {
+        if (!Array.isArray(flags[name])) flags[name] = [];
+        flags[name].push(value);
+      } else {
+        flags[name] = value;
       }
-      flags[name] = argv[++i];
       continue;
     }
 
