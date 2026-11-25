@@ -1,62 +1,27 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Header from './components/Header.jsx';
 import Sidebar from './components/Sidebar.jsx';
-import ConfigPanel from './components/ConfigPanel.jsx';
-import OpenApiImportPanel from './components/OpenApiImportPanel.jsx';
-import PostmanImportPanel from './components/PostmanImportPanel.jsx';
-import BatchResultsView from './components/BatchResultsView.jsx';
-import TestSuitePanel from './components/TestSuitePanel.jsx';
+import LabView from './components/LabView.jsx';
 import FailureDetailModal from './components/FailureDetailModal.jsx';
 import RegressionExportModal from './components/RegressionExportModal.jsx';
 import ApiKeyModal from './components/ApiKeyModal.jsx';
-import RecentRunsView from './components/RecentRunsView.jsx';
-import DocsView from './components/DocsView.jsx';
-import SettingsView from './components/SettingsView.jsx';
+import SecondaryViews from './components/SecondaryViews.jsx';
 import { PRESETS } from './utils/presets.js';
-import { buildConfigFromEndpoint } from './utils/openApiEndpoint.js';
-import { runBatch } from './utils/batchRunner.js';
-import {
-  buildGenerationConfig,
-  createDefaultEnvironments,
-  currentAuth,
-  currentEnvironment,
-  environmentSecrets,
-  environmentValues,
-  resolvedBaseUrl
-} from './utils/environments.js';
-import { redactSecrets, redactText } from '../../server/utils/environmentResolver.js';
-import {
-  fetchHealth,
-  fetchDemoMode,
-  setDemoMode,
-  parseOpenApiSpecApi,
-  generateTestPlanApi,
-  runTestsApi,
-  explainFailureApi
-} from './services/api.js';
-
-const STORAGE_KEY_RECENT_RUNS = 'apiforge_recent_runs_v1';
-const STORAGE_KEY_AI_SETTINGS = 'apiforge_ai_settings_v1';
+import { createDefaultEnvironments, environmentSecrets } from './utils/environments.js';
+import { fetchHealth } from './services/api.js';
+import { useTheme } from './hooks/useTheme.js';
+import { useAiSettings } from './hooks/useAiSettings.js';
+import { useRunHistory } from './hooks/useRunHistory.js';
+import { useTestSuite } from './hooks/useTestSuite.js';
+import { useDemoMode } from './hooks/useDemoMode.js';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState('lab'); // 'lab' | 'history' | 'docs' | 'settings'
   const [health, setHealth] = useState(null);
-  const [demoMode, setDemoModeState] = useState({ mode: 'vulnerable' });
   const [timeoutMs, setTimeoutMs] = useState(6000);
-
-  // AI Key & Model Settings (BYOK support - session only, zero persistent disk secrets)
-  const [aiSettings, setAiSettings] = useState(() => {
-    try {
-      const saved = sessionStorage.getItem(STORAGE_KEY_AI_SETTINGS) || localStorage.getItem(STORAGE_KEY_AI_SETTINGS);
-      if (localStorage.getItem(STORAGE_KEY_AI_SETTINGS)) {
-        localStorage.removeItem(STORAGE_KEY_AI_SETTINGS); // Purge from permanent disk
-      }
-      return saved ? JSON.parse(saved) : { useServerKey: true, customKey: '', model: 'gemini-3.5-flash-lite' };
-    } catch {
-      return { useServerKey: true, customKey: '', model: 'gemini-3.5-flash-lite' };
-    }
-  });
-  const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const { aiSettings, apiKeyModalOpen, setApiKeyModalOpen, handleSaveAiSettings } = useAiSettings();
+  const { recentRuns, recordRunToHistory, handleClearRuns } = useRunHistory();
 
   // Configuration state initialized from first preset (Demo Order API)
   const [config, setConfig] = useState({
@@ -70,6 +35,25 @@ export default function App() {
     environment: 'development',
     environments: createDefaultEnvironments()
   });
+  const configRef = useRef(config); configRef.current = config;
+  const batchRunIdRef = useRef(0);
+
+  const {
+    testSuite, customRequestStarted, setCustomRequestStarted,
+    openApiImportOpen, setOpenApiImportOpen, postmanImportOpen, setPostmanImportOpen,
+    batch, results, summary, loadingPlan, runningTests, planError, banner, setBanner,
+    inspectingFailure, setInspectingFailure, failureExplanation, explainingFailure,
+    exportModalOpen, setExportModalOpen,
+    handleGeneratePlan, handleLoadDemo, handleOpenApiImport, handleOpenPostmanImport,
+    handleChooseOpenApiEndpoint, handleChooseOpenApiEndpoints, handleOpenBatchEntry,
+    handleChoosePostmanRequest, handleToggleSelect, handleSelectAll, handleDeselectAll,
+    handleUpdateTest, handleRunSelected, handleRunSingle, handleInspectFailure,
+    handleExplainFailure, handleLoadRecentRun, handleBackToStart
+  } = useTestSuite({
+    configRef, setConfig, setCurrentTab, batchRunIdRef, aiSettings, health, timeoutMs, recordRunToHistory
+  });
+
+  const { demoMode, handleToggleDemoMode } = useDemoMode((error) => setBanner({ message: error.message }));
 
   // Auth is stored per environment in React state only. Credential values are
   // never typed here: each helper points at an environment variable.
@@ -82,55 +66,7 @@ export default function App() {
     });
   };
 
-  // Test Suite & Execution state
-  const [testSuite, setTestSuite] = useState(null);
-  const [customRequestStarted, setCustomRequestStarted] = useState(false);
-  const [openApiImportOpen, setOpenApiImportOpen] = useState(false);
-  const [postmanImportOpen, setPostmanImportOpen] = useState(false);
-  const [batch, setBatch] = useState(null); // { entries, running }
-  const batchRunIdRef = useRef(0);
-  const [theme, setTheme] = useState(() => {
-    const saved = localStorage.getItem('apiforge_theme');
-    return saved === 'light' ? 'light' : 'dark';
-  });
-  const [results, setResults] = useState(null);
-  const [summary, setSummary] = useState(null);
-  const [loadingPlan, setLoadingPlan] = useState(false);
-  const [runningTests, setRunningTests] = useState(false);
-  const [planError, setPlanError] = useState(null);
-  const [banner, setBanner] = useState(null);
-
-  // Modal states
-  const [inspectingFailure, setInspectingFailure] = useState(null); // { test, result }
-  const [failureExplanation, setFailureExplanation] = useState(null);
-  const [explainingFailure, setExplainingFailure] = useState(false);
-  const [exportModalOpen, setExportModalOpen] = useState(false);
-
-  // Session History
-  const [recentRuns, setRecentRuns] = useState([]);
-
-  // Load health, demo mode, and local history on mount
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    localStorage.setItem('apiforge_theme', theme);
-  }, [theme]);
-
-  useEffect(() => {
-    fetchHealth()
-      .then(setHealth)
-      .catch(err => console.warn('Could not reach backend health route:', err.message));
-
-    fetchDemoMode()
-      .then(setDemoModeState)
-      .catch(err => console.warn('Could not reach demo mode route:', err.message));
-
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_RECENT_RUNS);
-      if (saved) setRecentRuns(JSON.parse(saved));
-    } catch {
-      // Ignore local storage parse error
-    }
-  }, []);
+  useEffect(() => { fetchHealth().then(setHealth).catch(err => console.warn('Could not reach backend health route:', err.message)); }, []);
 
   // Modal containment: keep keyboard focus inside the open dialog, lock page
   // scroll, and return focus to the trigger when it closes.
@@ -176,395 +112,7 @@ export default function App() {
     };
   }, [anyModalOpen]);
 
-  const handleSaveAiSettings = (newSettings) => {
-    setAiSettings(newSettings);
-    try {
-      sessionStorage.setItem(STORAGE_KEY_AI_SETTINGS, JSON.stringify(newSettings));
-      localStorage.removeItem(STORAGE_KEY_AI_SETTINGS); // Ensure zero disk persistence
-    } catch {
-      // Ignore storage errors
-    }
-  };
-
-  // Save run to local history
-  const recordRunToHistory = (suite, runSummary, runResults) => {
-    const secrets = environmentSecrets(config);
-    const safe = redactSecrets({
-      suiteName: suite.suiteName,
-      path: config.path,
-      results: runResults,
-      tests: suite.tests
-    }, secrets);
-    const newRun = {
-      id: `run-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      suiteName: safe.suiteName,
-      path: safe.path,
-      summary: runSummary,
-      results: safe.results,
-      tests: safe.tests
-    };
-
-    const updated = [newRun, ...recentRuns].slice(0, 20); // Keep last 20 runs
-    setRecentRuns(updated);
-    try {
-      localStorage.setItem(STORAGE_KEY_RECENT_RUNS, JSON.stringify(updated));
-    } catch {
-      // Ignore storage errors
-    }
-  };
-
-  const handleToggleDemoMode = async (newMode) => {
-    try {
-      const res = await setDemoMode(newMode);
-      setDemoModeState(res);
-    } catch (err) {
-      setBanner({ message: `Could not switch demo mode: ${err.message}. Check that the API server is running, then try again.` });
-    }
-  };
-
-  // Generate Test Plan
-  const handleGeneratePlan = async () => {
-    setLoadingPlan(true);
-    setPlanError(null);
-    setBanner(null);
-    setResults(null);
-    setSummary(null);
-
-    const isCustomActive = !aiSettings.useServerKey && aiSettings.customKey;
-    const shouldFallbackOffline = !isCustomActive && !health?.aiConfigured;
-
-    try {
-      const plan = await generateTestPlanApi({
-        ...buildGenerationConfig(config),
-        useOfflineDemo: shouldFallbackOffline
-      }, aiSettings);
-      setTestSuite(plan);
-      setCurrentTab('lab');
-    } catch (err) {
-      setPlanError(err.message);
-    } finally {
-      setLoadingPlan(false);
-    }
-  };
-
-  // Load and generate interactive demo with one click
-  const handleLoadDemo = async () => {
-    const demoPreset = PRESETS[0];
-    const nextConfig = {
-      ...config,
-      method: demoPreset.method,
-      path: demoPreset.path,
-      expectedStatus: demoPreset.expectedStatus,
-      headers: demoPreset.headers,
-      body: demoPreset.body,
-      sampleResponse: demoPreset.sampleResponse,
-      businessRules: demoPreset.businessRules
-    };
-    setConfig(nextConfig);
-
-    setLoadingPlan(true);
-    setPlanError(null);
-    setResults(null);
-    setSummary(null);
-
-    const isCustomActive = !aiSettings.useServerKey && aiSettings.customKey;
-    const shouldFallbackOffline = !isCustomActive && !health?.aiConfigured;
-
-    try {
-      const plan = await generateTestPlanApi({
-        ...buildGenerationConfig(nextConfig),
-        useOfflineDemo: shouldFallbackOffline
-      }, aiSettings);
-      setTestSuite(plan);
-      setCustomRequestStarted(false);
-      setCurrentTab('lab');
-    } catch (err) {
-      setPlanError(err.message);
-    } finally {
-      setLoadingPlan(false);
-    }
-  };
-
-  const handleOpenApiImport = () => {
-    setPlanError(null);
-    setBanner(null);
-    setResults(null);
-    setSummary(null);
-    setTestSuite(null);
-    setCustomRequestStarted(false);
-    setPostmanImportOpen(false);
-    setOpenApiImportOpen(true);
-  };
-
-  const handleOpenPostmanImport = () => {
-    setPlanError(null);
-    setBanner(null);
-    setResults(null);
-    setSummary(null);
-    setTestSuite(null);
-    setCustomRequestStarted(false);
-    setOpenApiImportOpen(false);
-    setPostmanImportOpen(true);
-  };
-
-  const handleChooseOpenApiEndpoint = (endpoint) => {
-    setConfig(buildConfigFromEndpoint(config, endpoint));
-    setTestSuite(null);
-    setResults(null);
-    setSummary(null);
-    setPlanError(null);
-    setOpenApiImportOpen(false);
-    setCustomRequestStarted(true);
-    setCurrentTab('lab');
-  };
-
-  const handleChooseOpenApiEndpoints = async (endpoints) => {
-    const runId = batchRunIdRef.current + 1;
-    batchRunIdRef.current = runId;
-    const isCurrent = () => batchRunIdRef.current === runId;
-
-    setPlanError(null);
-    setBanner(null);
-    setResults(null);
-    setSummary(null);
-    setTestSuite(null);
-    setCustomRequestStarted(false);
-    setOpenApiImportOpen(false);
-    setBatch({ entries: [], running: true });
-    setCurrentTab('lab');
-
-    const isCustomActive = !aiSettings.useServerKey && aiSettings.customKey;
-    const shouldFallbackOffline = !isCustomActive && !health?.aiConfigured;
-
-    try {
-      const entries = await runBatch({
-        endpoints,
-        shouldContinue: isCurrent,
-        prepare: (endpoint) => buildConfigFromEndpoint(config, endpoint),
-        generate: (preparedConfig) => generateTestPlanApi({
-          ...buildGenerationConfig(preparedConfig),
-          useOfflineDemo: shouldFallbackOffline
-        }, aiSettings),
-        execute: async (preparedConfig, plan) => {
-          const runnerRes = await runTestsApi({
-            targetBaseUrl: resolvedBaseUrl(preparedConfig),
-            tests: plan.tests || [],
-            timeoutMs,
-            environment: currentEnvironment(preparedConfig),
-            auth: currentAuth(preparedConfig),
-            values: environmentValues(preparedConfig)
-          });
-          return {
-            ...runnerRes,
-            results: redactSecrets(runnerRes.results || [], environmentSecrets(preparedConfig))
-          };
-        },
-        onProgress: (nextEntries) => {
-          if (isCurrent()) setBatch({ entries: nextEntries, running: true });
-        }
-      });
-      if (isCurrent()) setBatch({ entries, running: false });
-    } catch (error) {
-      if (isCurrent()) {
-        setBatch({ entries: [], running: false });
-        setBanner({ message: `Batch run failed: ${error.message}.` });
-      }
-    }
-  };
-
-  const handleOpenBatchEntry = (entry) => {
-    if (!entry?.config) return;
-    batchRunIdRef.current += 1;
-    setConfig(entry.config);
-    setTestSuite(entry.testSuite || null);
-    setResults(entry.results || []);
-    setSummary(entry.summary || null);
-    setBatch(null);
-    setCustomRequestStarted(true);
-    setCurrentTab('lab');
-  };
-
-  // Postman requests are imported verbatim: {{variables}} stay as placeholders
-  // and the shared resolver replaces them with the selected environment's values.
-  const handleChoosePostmanRequest = (request) => {
-    const body = request.request?.body;
-    const rules = [
-      request.apiTitle ? `Collection: ${request.apiTitle}` : '',
-      request.summary ? `Request: ${request.summary}` : '',
-      'Postman import: scripts were not executed. Confirm the target URL, headers, body and expected status before generating tests.'
-    ].filter(Boolean).join('\n');
-
-    setConfig({
-      ...config,
-      method: request.method || 'GET',
-      path: request.path || '',
-      expectedStatus: '',
-      expectedStatusCodes: [],
-      expectedStatusReviewRequired: true,
-      importMetadata: {
-        source: 'postman',
-        apiTitle: request.apiTitle,
-        operationId: request.operationId,
-        requiresReview: true
-      },
-      headers: request.request?.headers || {},
-      body: body == null ? '' : (typeof body === 'string' ? body : JSON.stringify(body, null, 2)),
-      sampleResponse: '',
-      businessRules: rules
-    });
-    setTestSuite(null);
-    setResults(null);
-    setSummary(null);
-    setPlanError(null);
-    setPostmanImportOpen(false);
-    setCustomRequestStarted(true);
-    setCurrentTab('lab');
-  };
-
-  // Toggle selection on a single test
-  const handleToggleSelect = (testId) => {
-    if (!testSuite) return;
-    const updated = testSuite.tests.map(t =>
-      t.id === testId ? { ...t, selected: t.selected === false ? true : false } : t
-    );
-    setTestSuite({ ...testSuite, tests: updated });
-  };
-
-  const handleSelectAll = () => {
-    if (!testSuite) return;
-    const updated = testSuite.tests.map(t => ({ ...t, selected: true }));
-    setTestSuite({ ...testSuite, tests: updated });
-  };
-
-  const handleDeselectAll = () => {
-    if (!testSuite) return;
-    const updated = testSuite.tests.map(t => ({ ...t, selected: false }));
-    setTestSuite({ ...testSuite, tests: updated });
-  };
-
-  const handleUpdateTest = (testId, patch) => {
-    if (!testSuite) return;
-    const updated = testSuite.tests.map(t =>
-      t.id === testId ? { ...t, ...patch } : t
-    );
-    setTestSuite({ ...testSuite, tests: updated });
-  };
-
-  // Run Selected Tests
-  const handleRunSelected = async () => {
-    if (!testSuite) return;
-    setRunningTests(true);
-    setBanner(null);
-
-    try {
-      const runnerRes = await runTestsApi({
-        targetBaseUrl: resolvedBaseUrl(config),
-        tests: testSuite.tests,
-        timeoutMs,
-        environment: currentEnvironment(config),
-        auth: currentAuth(config),
-        values: environmentValues(config)
-      });
-
-      const safeResults = redactSecrets(runnerRes.results || [], environmentSecrets(config));
-      setSummary(runnerRes.summary);
-      setResults(safeResults);
-      recordRunToHistory(testSuite, runnerRes.summary, safeResults);
-    } catch (err) {
-      setBanner({ message: `Execution failed: ${err.message}. The backend runner did not respond — confirm the API server is up and retry.` });
-    } finally {
-      setRunningTests(false);
-    }
-  };
-
-  // Run a single test
-  const handleRunSingle = async (test) => {
-    setRunningTests(true);
-    try {
-      const runnerRes = await runTestsApi({
-        targetBaseUrl: resolvedBaseUrl(config),
-        tests: [{ ...test, selected: true }],
-        timeoutMs,
-        environment: currentEnvironment(config),
-        auth: currentAuth(config),
-        values: environmentValues(config)
-      });
-
-      const singleResult = redactSecrets(runnerRes.results[0] || {}, environmentSecrets(config));
-      setResults(prev => {
-        const filtered = (prev || []).filter(r => r.id !== test.id);
-        return [...filtered, singleResult];
-      });
-      setInspectingFailure(prev =>
-        prev?.test.id === test.id
-          ? { ...prev, test: { ...prev.test, ...test }, result: singleResult }
-          : prev
-      );
-    } catch (err) {
-      setBanner({ message: `Test execution failed: ${err.message}. Confirm the backend runner is running and try again.` });
-    } finally {
-      setRunningTests(false);
-    }
-  };
-
-  // Failure Inspector & AI diagnosis
-  const handleInspectFailure = (test, result) => {
-    setInspectingFailure({ test, result });
-    setFailureExplanation(null);
-  };
-
-  const handleExplainFailure = async (test, result) => {
-    setExplainingFailure(true);
-    try {
-      const explanation = await explainFailureApi({
-        test,
-        actual: result.actual,
-        failedAssertion: result.failureReason,
-        businessRules: redactText(config.businessRules || '', environmentSecrets(config))
-      }, aiSettings);
-      setFailureExplanation(explanation);
-    } catch (err) {
-      setBanner({ message: `Could not generate an AI explanation: ${err.message}. The failure details and cURL above remain available.` });
-    } finally {
-      setExplainingFailure(false);
-    }
-  };
-
-  const handleLoadRecentRun = (run) => {
-    setTestSuite({
-      suiteName: run.suiteName,
-      summary: `Restored from session history (${new Date(run.timestamp).toLocaleTimeString()})`,
-      tests: run.tests
-    });
-    if (run.path) {
-      setConfig(prev => ({ ...prev, path: run.path }));
-    }
-    setSummary(run.summary);
-    setResults(run.results);
-    setCurrentTab('lab');
-  };
-
-  const handleBackToStart = () => {
-    batchRunIdRef.current += 1;
-    setBatch(null);
-    setTestSuite(null);
-    setResults(null);
-    setSummary(null);
-    setCustomRequestStarted(false);
-    setOpenApiImportOpen(false);
-    setPostmanImportOpen(false);
-    setPlanError(null);
-    setBanner(null);
-    setInspectingFailure(null);
-    setFailureExplanation(null);
-    setExportModalOpen(false);
-  };
-
-  const handleClearRuns = () => {
-    setRecentRuns([]);
-    localStorage.removeItem(STORAGE_KEY_RECENT_RUNS);
-  };
+  const activeModel = aiSettings?.model || health?.model || 'gemini-3.5-flash-lite';
 
   return (
     <div className="app-container">
@@ -573,7 +121,7 @@ export default function App() {
         currentTab={currentTab}
         onSelectTab={setCurrentTab}
         recentRunsCount={recentRuns.length}
-        activeModel={aiSettings?.model || health?.model || 'gemini-3.5-flash-lite'}
+        activeModel={activeModel}
       />
 
       {/* Main App Area */}
@@ -607,132 +155,57 @@ export default function App() {
         {/* Tab Content */}
         <main className="main-content">
           {currentTab === 'lab' && (
-            batch ? (
-              <BatchResultsView
-                entries={batch.entries}
-                running={batch.running}
-                onOpenEntry={handleOpenBatchEntry}
-                onClose={handleBackToStart}
-              />
-            ) : openApiImportOpen ? (
-              <OpenApiImportPanel
-                onChooseEndpoint={handleChooseOpenApiEndpoint}
-                onChooseEndpoints={handleChooseOpenApiEndpoints}
-              />
-            ) : postmanImportOpen ? (
-              <PostmanImportPanel onChooseRequest={handleChoosePostmanRequest} />
-            ) : (!testSuite && !customRequestStarted) ? (
-              <div className="start-workspace">
-                <section className="start-copy">
-                  <p className="start-kicker">API behavior check</p>
-                  <h1>Find out how your API really behaves.</h1>
-                  <p>
-                    Generate edge-case tests, run them against your endpoint, and inspect any failure.
-                  </p>
-                  <div className="start-actions">
-                    <button
-                      type="button"
-                      className="btn btn-primary"
-                      onClick={handleLoadDemo}
-                      disabled={loadingPlan}
-                    >
-                      {loadingPlan ? 'Preparing demo…' : 'Run the demo'}
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={() => {
-                        setOpenApiImportOpen(false);
-                        setPostmanImportOpen(false);
-                        setConfig(prev => ({ ...prev, path: '' }));
-                        setCustomRequestStarted(true);
-                      }}
-                    >
-                      Test my API
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={handleOpenApiImport}
-                    >
-                      Import OpenAPI
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={handleOpenPostmanImport}
-                    >
-                      Import Postman
-                    </button>
-                  </div>
-                </section>
-
-                {planError && <div className="start-error">{planError}</div>}
-              </div>
-            ) : (
-              <>
-                <div className="panel-left">
-                  <ConfigPanel
-                    config={config}
-                    onChangeConfig={setConfig}
-                    onGeneratePlan={handleGeneratePlan}
-                    loading={loadingPlan}
-                    error={planError}
-                    activeModel={aiSettings?.model || health?.model || 'gemini-3.5-flash-lite'}
-                  />
-                </div>
-
-                <div className="panel-right">
-                  <TestSuitePanel
-                    testSuite={testSuite}
-                    results={results}
-                    summary={summary}
-                    targetPath={redactText(config.path || '', environmentSecrets(config))}
-                    onToggleSelect={handleToggleSelect}
-                    onSelectAll={handleSelectAll}
-                    onDeselectAll={handleDeselectAll}
-                    onUpdateTest={handleUpdateTest}
-                    onRunSelected={handleRunSelected}
-                    onRunSingle={handleRunSingle}
-                    onInspectFailure={handleInspectFailure}
-                    onOpenExport={() => setExportModalOpen(true)}
-                    running={runningTests}
-                  />
-                </div>
-              </>
-            )
+            <LabView
+              batch={batch}
+              openApiImportOpen={openApiImportOpen}
+              postmanImportOpen={postmanImportOpen}
+              testSuite={testSuite}
+              customRequestStarted={customRequestStarted}
+              loadingPlan={loadingPlan}
+              planError={planError}
+              config={config}
+              activeModel={activeModel}
+              results={results}
+              summary={summary}
+              runningTests={runningTests}
+              setConfig={setConfig}
+              setCustomRequestStarted={setCustomRequestStarted}
+              setOpenApiImportOpen={setOpenApiImportOpen}
+              setPostmanImportOpen={setPostmanImportOpen}
+              setExportModalOpen={setExportModalOpen}
+              handleOpenBatchEntry={handleOpenBatchEntry}
+              handleBackToStart={handleBackToStart}
+              handleChooseOpenApiEndpoint={handleChooseOpenApiEndpoint}
+              handleChooseOpenApiEndpoints={handleChooseOpenApiEndpoints}
+              handleChoosePostmanRequest={handleChoosePostmanRequest}
+              handleLoadDemo={handleLoadDemo}
+              handleGeneratePlan={handleGeneratePlan}
+              handleOpenApiImport={handleOpenApiImport}
+              handleOpenPostmanImport={handleOpenPostmanImport}
+              handleToggleSelect={handleToggleSelect}
+              handleSelectAll={handleSelectAll}
+              handleDeselectAll={handleDeselectAll}
+              handleUpdateTest={handleUpdateTest}
+              handleRunSelected={handleRunSelected}
+              handleRunSingle={handleRunSingle}
+              handleInspectFailure={handleInspectFailure}
+            />
           )}
 
-          {currentTab === 'history' && (
-            <div style={{ flex: 1 }}>
-              <RecentRunsView
-                runs={recentRuns}
-                onLoadRun={handleLoadRecentRun}
-                onClearRuns={handleClearRuns}
-              />
-            </div>
-          )}
-
-          {currentTab === 'docs' && (
-            <div style={{ flex: 1 }}>
-              <DocsView />
-            </div>
-          )}
-
-          {currentTab === 'settings' && (
-            <div style={{ flex: 1 }}>
-              <SettingsView
-                health={health}
-                aiSettings={aiSettings}
-                onOpenAiSettings={() => setApiKeyModalOpen(true)}
-                timeoutMs={timeoutMs}
-                onChangeTimeout={setTimeoutMs}
-                authConfig={currentAuth(config)}
-                variableNames={Object.keys(currentEnvironment(config).variables || {})}
-                environmentName={config.environment}
-                onChangeAuth={handleChangeAuth}
-              />
-            </div>
+          {currentTab !== 'lab' && (
+            <SecondaryViews
+              currentTab={currentTab}
+              recentRuns={recentRuns}
+              handleLoadRecentRun={handleLoadRecentRun}
+              handleClearRuns={handleClearRuns}
+              health={health}
+              aiSettings={aiSettings}
+              setApiKeyModalOpen={setApiKeyModalOpen}
+              timeoutMs={timeoutMs}
+              setTimeoutMs={setTimeoutMs}
+              config={config}
+              handleChangeAuth={handleChangeAuth}
+            />
           )}
         </main>
       </div>
@@ -752,7 +225,7 @@ export default function App() {
           test={inspectingFailure.test}
           result={inspectingFailure.result}
           businessRules={config.businessRules}
-          activeModel={aiSettings?.model || health?.model || 'gemini-3.5-flash-lite'}
+          activeModel={activeModel}
           onClose={() => setInspectingFailure(null)}
           onExplainFailure={handleExplainFailure}
           explaining={explainingFailure}

@@ -120,8 +120,10 @@ flowchart TD
     Frontend -->|12. Inspect Failure & Copy cURL| User
     Frontend -->|13. POST /api/explain-failure| Server
     Server -->|14. Suggested explanation| Model
-    Frontend -->|15. Export Runnable Suites| Exporter[Jest / Pytest Exporters]
+    Frontend -->|15. Export Runnable Suites| Exporter[Jest / Pytest / Postman Exporters]
 ```
+
+The React client keeps `App.jsx` as a thin composition layer (under 250 lines). View logic lives in `LabView` and `SecondaryViews`, while focused hooks (`useTheme`, `useAiSettings`, `useDemoMode`, `useRunHistory`, `useTestSuite`) own state transitions and handlers so single-endpoint and batch flows cannot drift. This is a structural refactor only: the UI and behavior are unchanged.
 
 ---
 
