@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Header from './components/Header.jsx';
 import Sidebar from './components/Sidebar.jsx';
 import ConfigPanel from './components/ConfigPanel.jsx';
 import OpenApiImportPanel from './components/OpenApiImportPanel.jsx';
 import PostmanImportPanel from './components/PostmanImportPanel.jsx';
+import BatchResultsView from './components/BatchResultsView.jsx';
 import TestSuitePanel from './components/TestSuitePanel.jsx';
 import FailureDetailModal from './components/FailureDetailModal.jsx';
 import RegressionExportModal from './components/RegressionExportModal.jsx';
@@ -12,7 +13,8 @@ import RecentRunsView from './components/RecentRunsView.jsx';
 import DocsView from './components/DocsView.jsx';
 import SettingsView from './components/SettingsView.jsx';
 import { PRESETS } from './utils/presets.js';
-import { applyParameterExamples } from './utils/openApiParams.js';
+import { buildConfigFromEndpoint } from './utils/openApiEndpoint.js';
+import { runBatch } from './utils/batchRunner.js';
 import {
   buildGenerationConfig,
   createDefaultEnvironments,
@@ -85,6 +87,8 @@ export default function App() {
   const [customRequestStarted, setCustomRequestStarted] = useState(false);
   const [openApiImportOpen, setOpenApiImportOpen] = useState(false);
   const [postmanImportOpen, setPostmanImportOpen] = useState(false);
+  const [batch, setBatch] = useState(null); // { entries, running }
+  const batchRunIdRef = useRef(0);
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem('apiforge_theme');
     return saved === 'light' ? 'light' : 'dark';
@@ -305,76 +309,78 @@ export default function App() {
   };
 
   const handleChooseOpenApiEndpoint = (endpoint) => {
-    const expectedStatusCodes = Array.isArray(endpoint.expected?.statusCodes)
-      ? endpoint.expected.statusCodes
-      : [];
-    const serverNeedsReview = Boolean(endpoint.serverUrlNeedsReview || !endpoint.serverUrl);
-    const { path: substitutedPath, query, unresolved } = applyParameterExamples(
-      endpoint.path || '',
-      endpoint.parameters || []
-    );
-    const parameterNeedsReview = unresolved.length > 0;
-    let path = `${substitutedPath}${query}`;
-    let serverBaseUrl = '';
-
-    if (!serverNeedsReview && endpoint.serverUrl) {
-      try {
-        const server = new URL(endpoint.serverUrl);
-        if (['http:', 'https:'].includes(server.protocol)) {
-          const basePath = server.pathname.replace(/\/+$/, '');
-          const operationPath = `/${substitutedPath.replace(/^\/+/, '')}`;
-          serverBaseUrl = `${server.origin}${basePath}`;
-          path = `${serverBaseUrl}${operationPath}${query}`;
-        }
-      } catch {
-        // Keep the relative operation path; the user can set a target URL manually.
-      }
-    }
-
-    const parameterNotes = (endpoint.parameters || []).map((parameter) => {
-      const required = parameter.required ? ' (required)' : '';
-      const example = parameter.example !== undefined ? `; example: ${JSON.stringify(parameter.example)}` : '';
-      const description = parameter.description ? ` — ${parameter.description}` : '';
-      return `- ${parameter.in} parameter "${parameter.name}"${required}${description}${example}`;
-    });
-    const rules = [
-      endpoint.apiTitle ? `API: ${endpoint.apiTitle}` : '',
-      endpoint.summary || endpoint.description,
-      ...(parameterNotes.length ? ['Parameters from the API specification:', ...parameterNotes] : []),
-      ...(parameterNeedsReview
-        ? [`Unresolved path parameters: ${unresolved.join(', ')}. Provide concrete values before running.`]
-        : []),
-      endpoint.requestBody?.schema ? `Request body schema: ${JSON.stringify(endpoint.requestBody.schema)}` : ''
-    ].filter(Boolean).join('\n');
-    const body = endpoint.request?.body;
-    const headers = endpoint.request?.headers || {};
-
-    setConfig({
-      ...config,
-      method: endpoint.method,
-      path,
-      expectedStatus: expectedStatusCodes[0] ?? '',
-      expectedStatusCodes,
-      expectedStatusReviewRequired: expectedStatusCodes.length === 0,
-      importMetadata: {
-        apiTitle: endpoint.apiTitle,
-        operationId: endpoint.operationId,
-        serverNeedsReview,
-        serverBaseUrl,
-        parameterNeedsReview,
-        unresolvedParameters: unresolved,
-        requiresReview: Boolean(endpoint.requiresReview || serverNeedsReview || parameterNeedsReview)
-      },
-      headers,
-      body: body == null ? '' : JSON.stringify(body, null, 2),
-      sampleResponse: '',
-      businessRules: rules
-    });
+    setConfig(buildConfigFromEndpoint(config, endpoint));
     setTestSuite(null);
     setResults(null);
     setSummary(null);
     setPlanError(null);
     setOpenApiImportOpen(false);
+    setCustomRequestStarted(true);
+    setCurrentTab('lab');
+  };
+
+  const handleChooseOpenApiEndpoints = async (endpoints) => {
+    const runId = batchRunIdRef.current + 1;
+    batchRunIdRef.current = runId;
+    const isCurrent = () => batchRunIdRef.current === runId;
+
+    setPlanError(null);
+    setBanner(null);
+    setResults(null);
+    setSummary(null);
+    setTestSuite(null);
+    setCustomRequestStarted(false);
+    setOpenApiImportOpen(false);
+    setBatch({ entries: [], running: true });
+    setCurrentTab('lab');
+
+    const isCustomActive = !aiSettings.useServerKey && aiSettings.customKey;
+    const shouldFallbackOffline = !isCustomActive && !health?.aiConfigured;
+
+    try {
+      const entries = await runBatch({
+        endpoints,
+        shouldContinue: isCurrent,
+        prepare: (endpoint) => buildConfigFromEndpoint(config, endpoint),
+        generate: (preparedConfig) => generateTestPlanApi({
+          ...buildGenerationConfig(preparedConfig),
+          useOfflineDemo: shouldFallbackOffline
+        }, aiSettings),
+        execute: async (preparedConfig, plan) => {
+          const runnerRes = await runTestsApi({
+            targetBaseUrl: resolvedBaseUrl(preparedConfig),
+            tests: plan.tests || [],
+            timeoutMs,
+            environment: currentEnvironment(preparedConfig),
+            auth: currentAuth(preparedConfig),
+            values: environmentValues(preparedConfig)
+          });
+          return {
+            ...runnerRes,
+            results: redactSecrets(runnerRes.results || [], environmentSecrets(preparedConfig))
+          };
+        },
+        onProgress: (nextEntries) => {
+          if (isCurrent()) setBatch({ entries: nextEntries, running: true });
+        }
+      });
+      if (isCurrent()) setBatch({ entries, running: false });
+    } catch (error) {
+      if (isCurrent()) {
+        setBatch({ entries: [], running: false });
+        setBanner({ message: `Batch run failed: ${error.message}.` });
+      }
+    }
+  };
+
+  const handleOpenBatchEntry = (entry) => {
+    if (!entry?.config) return;
+    batchRunIdRef.current += 1;
+    setConfig(entry.config);
+    setTestSuite(entry.testSuite || null);
+    setResults(entry.results || []);
+    setSummary(entry.summary || null);
+    setBatch(null);
     setCustomRequestStarted(true);
     setCurrentTab('lab');
   };
@@ -540,6 +546,8 @@ export default function App() {
   };
 
   const handleBackToStart = () => {
+    batchRunIdRef.current += 1;
+    setBatch(null);
     setTestSuite(null);
     setResults(null);
     setSummary(null);
@@ -580,10 +588,10 @@ export default function App() {
           onLoadDemo={handleLoadDemo}
           loading={loadingPlan || runningTests}
           customRequestActive={customRequestStarted}
-          importActive={openApiImportOpen || postmanImportOpen}
+          importActive={openApiImportOpen || postmanImportOpen || Boolean(batch)}
           theme={theme}
           onChangeTheme={setTheme}
-          showBack={currentTab === 'lab' && (Boolean(testSuite) || customRequestStarted || openApiImportOpen || postmanImportOpen)}
+          showBack={currentTab === 'lab' && (Boolean(testSuite) || customRequestStarted || openApiImportOpen || postmanImportOpen || Boolean(batch))}
           onBack={handleBackToStart}
         />
 
@@ -599,8 +607,18 @@ export default function App() {
         {/* Tab Content */}
         <main className="main-content">
           {currentTab === 'lab' && (
-            openApiImportOpen ? (
-              <OpenApiImportPanel onChooseEndpoint={handleChooseOpenApiEndpoint} />
+            batch ? (
+              <BatchResultsView
+                entries={batch.entries}
+                running={batch.running}
+                onOpenEntry={handleOpenBatchEntry}
+                onClose={handleBackToStart}
+              />
+            ) : openApiImportOpen ? (
+              <OpenApiImportPanel
+                onChooseEndpoint={handleChooseOpenApiEndpoint}
+                onChooseEndpoints={handleChooseOpenApiEndpoints}
+              />
             ) : postmanImportOpen ? (
               <PostmanImportPanel onChooseRequest={handleChoosePostmanRequest} />
             ) : (!testSuite && !customRequestStarted) ? (

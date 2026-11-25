@@ -3,7 +3,7 @@
 > 🏆 **Hacktoberfest Track Winner — Best Use of Gemma 4**
 
 [![CI](https://github.com/INSVikrant54/APIForge/actions/workflows/ci.yml/badge.svg)](https://github.com/INSVikrant54/APIForge/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-1.8.0-blue.svg)](https://github.com/INSVikrant54/APIForge/releases)
+[![Version](https://img.shields.io/badge/version-1.9.0-blue.svg)](https://github.com/INSVikrant54/APIForge/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 APIForge is a developer workbench for finding API edge cases. Google Gemini or Gemma models propose tests; a **deterministic backend execution engine** sends real HTTP requests and evaluates the results.
@@ -181,7 +181,7 @@ APIForge is an interactive developer workbench, not an opaque black box:
 
 ## 📥 OpenAPI / Swagger Import
 
-APIForge can read an **OpenAPI 3.0.x** or **Swagger 2.0** contract supplied as JSON or YAML and turn its operations into test-plan-ready endpoint descriptors. This was the first Phase 1 capability to ship; named environments, variables, and authentication helpers followed in v1.7.0, and Postman Collection v2.1 interoperability arrived in v1.8.0. Request chaining remains unimplemented.
+APIForge can read an **OpenAPI 3.0.x** or **Swagger 2.0** contract supplied as JSON or YAML and turn its operations into test-plan-ready endpoint descriptors. This was the first Phase 1 capability to ship; named environments, variables, and authentication helpers followed in v1.7.0, Postman Collection v2.1 interoperability arrived in v1.8.0, and bounded multi-endpoint batch runs in v1.9.0. Request chaining remains unimplemented.
 
 ### Supported scope
 
@@ -227,6 +227,17 @@ v1.8.0 adds Postman interoperability. Choose **Import Postman** on the start scr
 - **Bounds:** collections are capped at **1 MiB** and **50 requests**, with per-request header and body limits. Folders are flattened within a depth cap. Oversized input is rejected, not silently truncated.
 - **Data only:** Postman `event` scripts are never executed. `{{variable}}` placeholders in URLs, headers, and bodies are preserved and resolved later by the selected environment — the same resolver used by the OpenAPI, CLI, and runner paths. Imported requests are marked for review; no expected status code is invented.
 - **Export safety:** generated collections are redacted twice (in the export modal and in the exporter). Literal `Authorization`, `Cookie`, `Set-Cookie`, and `X-Gemini-API-Key` values are dropped; templated values such as `Bearer {{token}}` are kept. Exports carry a `baseUrl` collection variable placeholder and never contain session secrets.
+
+---
+
+## 🧪 Bounded Multi-Endpoint Batch
+
+v1.9.0 lets you select several operations after an OpenAPI import and run them as one batch. A tab per endpoint shows its plan, results, and any error; completed endpoints can be opened in the main workspace.
+
+- **Bounded:** selection is capped at **5 endpoints**. The same endpoint-to-config adapter is used for single imports and batch imports, so the two paths cannot diverge.
+- **Paced:** a client-side gate spaces analysis and execution calls to one every six seconds (ten per minute, sliding window). This is additive to the server's existing limiters — none were relaxed. Endpoints run strictly one at a time.
+- **Resilient:** a failure in one endpoint is recorded in its tab and the remaining endpoints still run. Navigating away cancels the in-flight batch.
+- **Safe:** results are redacted with the selected environment's secret list before they reach the batch view; environment variables and auth helpers apply to every endpoint in the batch. SSRF, timeout clamping, and demo isolation are unchanged.
 
 ---
 

@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { AlertCircle, FileUp, LoaderCircle } from 'lucide-react';
 import { parseOpenApiSpecApi } from '../services/api.js';
+import { MAX_BATCH_ENDPOINTS } from '../utils/batchRunner.js';
 
 const MAX_SPEC_BYTES = 1024 * 1024;
 
@@ -10,10 +11,11 @@ function formatOperation(operation) {
   return { method, summary };
 }
 
-export default function OpenApiImportPanel({ onChooseEndpoint }) {
+export default function OpenApiImportPanel({ onChooseEndpoint, onChooseEndpoints }) {
   const [source, setSource] = useState('');
   const [fileName, setFileName] = useState('');
   const [endpoints, setEndpoints] = useState([]);
+  const [selected, setSelected] = useState([]);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const fileInputRef = useRef(null);
@@ -23,6 +25,7 @@ export default function OpenApiImportPanel({ onChooseEndpoint }) {
     if (!file || busy) return;
     setError('');
     setEndpoints([]);
+    setSelected([]);
     if (file.size > MAX_SPEC_BYTES) {
       setError('Choose a specification no larger than 1 MiB.');
       event.target.value = '';
@@ -48,6 +51,7 @@ export default function OpenApiImportPanel({ onChooseEndpoint }) {
     setBusy(true);
     setError('');
     setEndpoints([]);
+    setSelected([]);
     try {
       const parsed = await parseOpenApiSpecApi(sourceToParse);
       setEndpoints(parsed);
@@ -84,6 +88,7 @@ export default function OpenApiImportPanel({ onChooseEndpoint }) {
               setSource(event.target.value);
               setFileName('');
               setEndpoints([]);
+              setSelected([]);
               setError('');
             }}
             placeholder={'openapi: 3.0.3\ninfo:\n  title: My API\n  version: 1.0.0\npaths: {}'}
@@ -129,12 +134,44 @@ export default function OpenApiImportPanel({ onChooseEndpoint }) {
             <h2 id="openapi-operations-title">Choose an operation</h2>
             <span>{endpoints.length} found</span>
           </div>
+          <div className="openapi-batch-controls">
+            <label>
+              <input
+                type="checkbox"
+                aria-label="Select all operations"
+                checked={selected.length === endpoints.length}
+                onChange={(event) => setSelected(event.target.checked ? endpoints.map((_, i) => i) : [])}
+              />
+              <span>Select all for batch</span>
+            </label>
+            <span>
+              {selected.length} selected · up to {MAX_BATCH_ENDPOINTS} · calls run sequentially at 10/min
+            </span>
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              disabled={selected.length === 0 || selected.length > MAX_BATCH_ENDPOINTS || !onChooseEndpoints}
+              onClick={() => onChooseEndpoints?.(selected.map((i) => endpoints[i]))}
+            >
+              Run selected batch
+            </button>
+          </div>
           {endpoints.map((endpoint, index) => {
             const { method, summary } = formatOperation(endpoint);
             const serverNeedsReview = endpoint.serverUrlNeedsReview || !endpoint.serverUrl;
             return (
               <article className="openapi-operation" key={`${method}-${endpoint.path}-${index}`}>
                 <div className="openapi-operation-details">
+                  <input
+                    type="checkbox"
+                    aria-label={`Select ${method} ${endpoint.path}`}
+                    checked={selected.includes(index)}
+                    onChange={(event) => setSelected((previous) => (
+                      event.target.checked
+                        ? [...previous, index]
+                        : previous.filter((i) => i !== index)
+                    ))}
+                  />
                   <span className={`openapi-method method-${method.toLowerCase()}`}>{method}</span>
                   <code>{endpoint.path}</code>
                   <strong>{summary}</strong>
