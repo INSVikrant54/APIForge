@@ -35,6 +35,12 @@ jobs:
       - name: Run server tests
         run: npm --prefix server test
 
+      - name: Run CLI tests
+        run: npm run test:cli
+
+      - name: Smoke test CLI help
+        run: npm run cli -- --help
+
       - name: Install Playwright browsers
         working-directory: client
         run: npx playwright install --with-deps chromium

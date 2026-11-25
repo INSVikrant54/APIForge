@@ -1,0 +1,36 @@
+name: APIForge Run
+description: Run an APIForge suite file and emit machine-readable results.
+
+inputs:
+  suite:
+    description: Path to an APIForge suite JSON file.
+    required: true
+  env:
+    description: Name of the environment inside the suite file.
+    required: false
+    default: default
+  format:
+    description: Output format (text, json, junit, or sarif).
+    required: false
+    default: junit
+  output:
+    description: Optional path to write the report instead of stdout.
+    required: false
+    default: apiforge-results.xml
+  timeout-ms:
+    description: Per-request timeout in milliseconds.
+    required: false
+    default: '6000'
+
+runs:
+  using: composite
+  steps:
+    - name: Run APIForge suite
+      shell: bash
+      run: |
+        node "${{ github.action_path }}/../../../cli/index.js" run "${{ inputs.suite }}" \
+          --env "${{ inputs.env }}" \
+          --format "${{ inputs.format }}" \
+          --output "${{ inputs.output }}" \
+          --timeout "${{ inputs.timeout-ms }}" \
+          --ci
