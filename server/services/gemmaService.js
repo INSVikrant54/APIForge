@@ -1,5 +1,9 @@
 import { GoogleGenAI } from '@google/genai';
-import { validateAndNormalizeTestPlan } from '../utils/schemaValidator.js';
+import {
+  validateAndNormalizeTestPlan,
+  normalizeExpectedStatusCodes,
+  SUCCESS_STATUS_REVIEW_DESCRIPTION
+} from '../utils/schemaValidator.js';
 import { getOfflineDemoPlan } from './offlineDemoPlan.js';
 
 /**
@@ -102,8 +106,53 @@ export async function generateTestPlan(apiConfig) {
     businessRules = '',
     useOfflineDemo = false,
     customApiKey = null,
-    customModel = null
+    customModel = null,
+    expectedStatusCodes = null,
+    expectedStatusReviewRequired = false
   } = apiConfig;
+
+  // Imported OpenAPI success metadata. When supplied it is enforced on every
+  // happy_path case after validation. When no metadata is supplied generation
+  // (including offline demo mode) is left completely unchanged.
+  const hasDeclaredStatusList = Array.isArray(expectedStatusCodes);
+  const declaredStatusCodes = hasDeclaredStatusList
+    ? normalizeExpectedStatusCodes(expectedStatusCodes)
+    : [];
+  const importedExpectationProvided = hasDeclaredStatusList || expectedStatusReviewRequired === true;
+  const importedReviewRequired =
+    expectedStatusReviewRequired === true ||
+    (hasDeclaredStatusList && declaredStatusCodes.length === 0);
+
+  /**
+   * Final enforcement pass. Runs on every return path so the declared contract
+   * wins regardless of model output, validator fallbacks, or demo/fallback
+   * suites. No-op when the request did not carry imported metadata.
+   */
+  function applyImportedExpectations(plan) {
+    if (!importedExpectationProvided || !plan || typeof plan !== 'object' || !Array.isArray(plan.tests)) {
+      return plan;
+    }
+    for (const test of plan.tests) {
+      if (!test || test.category !== 'happy_path') continue;
+      if (!test.expected || typeof test.expected !== 'object') test.expected = {};
+      if (declaredStatusCodes.length > 0) {
+        test.expected.statusCodes = [...declaredStatusCodes];
+      } else {
+        test.expected.statusCodes = [];
+        const baseDescription = typeof test.expected.description === 'string' && test.expected.description.trim()
+          ? test.expected.description
+          : '';
+        test.expected.description = baseDescription
+          ? `${baseDescription} ${SUCCESS_STATUS_REVIEW_DESCRIPTION}`
+          : SUCCESS_STATUS_REVIEW_DESCRIPTION;
+      }
+      if (importedReviewRequired) {
+        test.requiresReview = true;
+        test.confirmed = false;
+      }
+    }
+    return plan;
+  }
 
   const client = getGenAIClient(customApiKey);
   const modelName = customModel || process.env.GEMMA_MODEL || 'gemini-3.5-flash-lite';
@@ -112,7 +161,7 @@ export async function generateTestPlan(apiConfig) {
   if (!client || useOfflineDemo) {
     if (path.includes('/demo/') || useOfflineDemo) {
       console.log('ℹ️ Utilizing Predefined Offline Demo Suite (No Gemini API key or offline demo requested)');
-      return getOfflineDemoPlan();
+      return applyImportedExpectations(getOfflineDemoPlan());
     }
     throw new Error(
       'No Gemini API key available. Configure your key in Settings or choose "Try Interactive Demo" for offline mode.'
@@ -221,13 +270,15 @@ Generate a comprehensive, balanced collection of 8 to 12 realistic test cases ac
     // Validate and sanitize against schema
     const validated = validateAndNormalizeTestPlan(parsedJson, {
       defaultMethod: method,
-      defaultPath: path
+      defaultPath: path,
+      expectedStatusCodes,
+      expectedStatusReviewRequired
     });
 
     validated.engine = `Gemma 4 (${modelName})`;
     validated.isPredefinedDemo = false;
 
-    return validated;
+    return applyImportedExpectations(validated);
   } catch (err) {
     console.error('Error generating test plan with Gemma 4:', err);
 
@@ -236,7 +287,7 @@ Generate a comprehensive, balanced collection of 8 to 12 realistic test cases ac
       console.warn('⚠️ Gemma API call failed. Falling back to Predefined Offline Demo Suite for demo endpoint.');
       const fallback = getOfflineDemoPlan();
       fallback.warning = `Live Gemma API call failed (${err.message}). Loaded deterministic demo suite so testing can continue.`;
-      return fallback;
+      return applyImportedExpectations(fallback);
     }
 
     throw new Error(`Gemma 4 test generation failed: ${err.message}`);

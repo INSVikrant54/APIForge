@@ -1,6 +1,6 @@
 {
   "name": "apiforge-monorepo",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "APIForge — AI-Powered API Behavior Verification & Debugging Platform",
   "private": true,
   "type": "module",

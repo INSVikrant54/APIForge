@@ -3,18 +3,19 @@
 > 🏆 **Hacktoberfest Track Winner — Best Use of Gemma 4**
 
 [![CI](https://github.com/INSVikrant54/APIForge/actions/workflows/ci.yml/badge.svg)](https://github.com/INSVikrant54/APIForge/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](https://github.com/INSVikrant54/APIForge/releases)
+[![Version](https://img.shields.io/badge/version-1.4.0-blue.svg)](https://github.com/INSVikrant54/APIForge/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 APIForge is a developer workbench for finding API edge cases. Google Gemini or Gemma models propose tests; a **deterministic backend execution engine** sends real HTTP requests and evaluates the results.
 
-Developers provide an API endpoint, a sample payload, and business rules written in plain English. APIForge proposes adversarial edge cases across 7 categories, lets developers inspect and fine-tune assertions, executes real HTTP requests with SSRF target checks, and exports regression suites that can be run in CI.
+Developers provide an API endpoint, a sample payload, and business rules written in plain English — or import an OpenAPI 3.0.x / Swagger 2.0 spec to pre-fill endpoints, request bodies, and expected status codes. APIForge proposes adversarial edge cases across 7 categories, lets developers inspect and fine-tune assertions, executes real HTTP requests with SSRF target checks, and exports regression suites that can be run in CI.
 
 ---
 
 ## 🌟 Key Features
 
 - **Adversarial edge-case synthesis:** Uses Google Gemini or Gemma models through the official `@google/genai` SDK; the default is `gemini-3.5-flash-lite`.
+- **OpenAPI / Swagger import:** Paste or upload an OpenAPI 3.0.x or Swagger 2.0 JSON/YAML spec to pre-fill operations, parameters, sample bodies, and the success status codes declared in the contract. See [OpenAPI / Swagger Import](#-openapi--swagger-import).
 - **Deterministic Verification Engine:** Never relies on LLMs to hallucinate pass/fail results. Real HTTP requests are executed against the target server, and responses are verified by a strict assertion engine.
 - **Human-in-the-Loop Developer Control:** Inspect, edit, and fine-tune request payloads, headers, and expected assertions before firing a single request.
 - **Review before execution:** Marks ambiguous expectations for confirmation before those tests run.
@@ -32,6 +33,7 @@ Developers provide an API endpoint, a sample payload, and business rules written
 - [AI Engine & Flexible Model Architecture](#-ai-engine--flexible-model-architecture)
 - [Bring Your Own Key (BYOK)](#-bring-your-own-key-byok)
 - [System Architecture](#-system-architecture)
+- [OpenAPI / Swagger Import](#-openapi--swagger-import)
 - [7 Edge-Case Test Categories](#-7-edge-case-test-categories)
 - [Interactive Sandbox: Safe vs. Vulnerable Mode](#-interactive-sandbox-safe-vs-vulnerable-mode)
 - [Developer Control & Custom Assertions](#-developer-control--custom-assertions)
@@ -173,6 +175,46 @@ APIForge is an interactive developer workbench, not an opaque black box:
 
 ---
 
+## 📥 OpenAPI / Swagger Import
+
+APIForge can read an **OpenAPI 3.0.x** or **Swagger 2.0** contract supplied as JSON or YAML and turn its operations into test-plan-ready endpoint descriptors. This is the first Phase 1 capability to ship; it does **not** mean that the rest of Phase 1 (environments and variables, auth helpers, Postman interoperability, request chaining, CLI) is available.
+
+### Supported scope
+
+- Paste a JSON or YAML document into the workspace (**Import OpenAPI** on the start screen) or choose a `.json`, `.yaml`, or `.yml` file.
+- `openapi: 3.0.x` and `swagger: "2.0"` documents are recognized; JSON is parsed first, with a safe YAML subset as the fallback. OpenAPI 3.1 and other versions are rejected with a clear error.
+- Only `GET`, `POST`, `PUT`, `PATCH`, and `DELETE` operations are extracted — the methods accepted by the test-plan schema. Other operations (for example `HEAD`, `OPTIONS`, or `TRACE`) are ignored.
+- Each endpoint carries `method`, `path`, `summary`, `description`, `operationId`, normalized `parameters`, a `requestBody` descriptor (`required`, `contentType`, `schema`, and a generated `example`), and a ready-to-run `request` (`method`, `path`, `headers`, `body`). Path-level and operation-level parameters are merged; examples honor `example` / `default` hints from the contract.
+- `expected.statusCodes` contains only **explicit 2xx responses** declared in the contract. Import pre-fills the request configuration; the model still proposes edge cases, and the deterministic runner still decides pass/fail. Declared 2xx codes are authoritative for `happy_path` cases. If no success code is declared — or the base URL is a template / non-HTTP(S) URL — `requiresReview` is set and the case is left for confirmation instead of inventing a `200`.
+
+### Basic usage
+
+In the web workspace:
+
+1. Click **Import OpenAPI** on the start screen.
+2. Paste the spec or choose a file, then click **Read specification**.
+3. Select an operation to pre-fill the endpoint, body, and expected status codes, then generate and run the test plan as usual.
+
+The same operation is available over HTTP:
+
+```http
+POST /api/openapi/parse
+Content-Type: application/json
+
+{ "source": "<the complete JSON or YAML spec as a string>" }
+```
+
+A successful response is `{ "success": true, "data": [ ...endpoints ] }`. Malformed or unrecognized input returns `400`, a spec larger than 1 MB returns `413`, and a spec with no supported operations returns `422`. The endpoint is rate limited.
+
+### Bounds and security
+
+- Specs are capped at **1 MiB** of text and at **200 operations** per document; larger inputs are rejected (the API responds `400`), not processed without limit.
+- Only local `#/...` JSON-pointer `$ref`s inside the pasted document are resolved. **External references (remote URLs or other files) are never fetched** — they are rejected, as are unresolved refs, unsafe pointer tokens, and refs beyond the depth/node caps. Cyclic refs are bounded rather than followed indefinitely.
+- Imported contracts are treated as data only: YAML is parsed with a `core` schema (no custom tags or executable constructs), no script from a spec is executed, and only explicit numeric 2xx codes are used as expected successes.
+- A spec's base URL (`servers` / `host`) is captured verbatim, never substituted from variables, and flagged for review when it is a template or not HTTP(S). **Local and private API targets remain blocked** by the SSRF guard, including hostnames that resolve to private ranges; only APIForge's built-in demo API is exempt. A base URL in a spec does not bypass those checks.
+
+---
+
 ## 🛡️ Security & SSRF Safeguards
 
 Because APIForge executes HTTP requests on behalf of users, it applies network and input safeguards:
@@ -278,7 +320,7 @@ npm run dev:client
 6. **Verify safe mode:** Switch the demo to **Use safe demo** and rerun the tests. Expected checks should pass; cases marked for confirmation remain identified for review.
 7. **Export:** Click **Export** to download Jest/Pytest regression suites for CI.
 
-**For your own API:** Choose **Test my API**, enter a public endpoint and rules, then click **Generate Test Plan**. The selected Gemini or Gemma model proposes edge cases across 7 categories. Private and local network targets are blocked except for the built-in demo.
+**For your own API:** Choose **Test my API**, enter a public endpoint and rules, then click **Generate Test Plan**. The selected Gemini or Gemma model proposes edge cases across 7 categories. Alternatively, choose **Import OpenAPI** to start from an OpenAPI 3.0.x or Swagger 2.0 JSON/YAML spec and pre-fill operations and expected status codes. Private and local network targets are blocked except for the built-in demo.
 
 ---
 

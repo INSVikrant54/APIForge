@@ -19,6 +19,7 @@
       </a>
       <nav class="nav-links" aria-label="Primary">
         <a href="#quickstart" class="hide-mobile">Quickstart</a>
+        <a href="#import" class="hide-mobile">Import</a>
         <a href="#categories" class="hide-mobile">Categories</a>
         <a href="#compare" class="hide-mobile">Compare</a>
         <a href="https://github.com/INSVikrant54/APIForge" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">GitHub</a>
@@ -30,10 +31,10 @@
     <section class="hero">
       <div class="container hero-grid">
         <div>
-          <span class="kicker">OPEN SOURCE · MIT LICENSE · v1.3.0</span>
+          <span class="kicker">OPEN SOURCE · MIT LICENSE · v1.4.0</span>
           <h1>Find out how your API really behaves.</h1>
           <p class="hero-sub">
-            Gemini or Gemma models propose edge cases from plain-English business rules.
+            Gemini or Gemma models propose edge cases from plain-English business rules — or import an OpenAPI 3.0.x / Swagger 2.0 spec to start from an existing contract.
             A deterministic HTTP runner and assertion engine evaluate the actual responses; AI never decides pass or fail.
           </p>
           <div class="hero-actions">
@@ -103,6 +104,39 @@ Use safe demo</pre>
       </div>
     </section>
 
+    <section id="import" class="section">
+      <div class="container">
+        <div class="section-header">
+          <h2>Import an OpenAPI / Swagger spec</h2>
+          <p>Paste or upload an OpenAPI 3.0.x or Swagger 2.0 JSON/YAML document to pre-fill operations, parameters, sample request bodies, and the success status codes declared in the contract.</p>
+        </div>
+        <div class="steps-grid">
+          <div class="card">
+            <div class="card-num">01 · SUPPORTED SCOPE</div>
+            <h3>Contracts, not scripts</h3>
+            <p>OpenAPI 3.0.x and Swagger 2.0 in JSON or a safe YAML subset. Only GET, POST, PUT, PATCH and DELETE operations are extracted. Local #/ references are resolved; external references are rejected, never fetched.</p>
+          </div>
+          <div class="card">
+            <div class="card-num">02 · IN THE WORKSPACE</div>
+            <h3>Import, then verify</h3>
+            <p>Choose “Import OpenAPI”, paste a spec or choose a file, click “Read specification”, and select an operation to pre-fill the request and its declared expectations. The deterministic runner still decides pass or fail.</p>
+            <pre class="code-snippet">Import OpenAPI → Read specification
+→ Select operation → Generate plan</pre>
+          </div>
+          <div class="card">
+            <div class="card-num">03 · BOUNDS &amp; SECURITY</div>
+            <h3>Deliberately limited</h3>
+            <p>Specs are capped at 1 MiB and 200 operations. External $refs are rejected, never fetched, and server template variables are not auto-expanded. Local and private API targets stay blocked by the SSRF guard — a base URL in a spec does not bypass that check.</p>
+            <pre class="code-snippet">POST /api/openapi/parse
+{ "source": "&lt;spec text&gt;" }</pre>
+          </div>
+        </div>
+        <p style="margin-top: 18px; color: var(--text-muted); font-size: 0.85rem;">
+          Import is the only Phase 1 slice shipped in v1.4.0. Environments and variables, auth helpers, Postman import/export, request chaining, and a CLI are not part of this release.
+        </p>
+      </div>
+    </section>
+
     <section id="categories" class="section">
       <div class="container">
         <div class="section-header">
@@ -169,7 +203,7 @@ Use safe demo</pre>
             <tbody>
               <tr>
                 <td>Required input to start</td>
-                <td class="highlight-col">URL + English rules</td>
+                <td class="highlight-col">URL + English rules, or an imported spec</td>
                 <td>Manual collections</td>
                 <td>OpenAPI spec</td>
                 <td>CI / traffic proxy</td>
@@ -211,11 +245,11 @@ Use safe demo</pre>
 
   <footer class="footer">
     <div class="container footer-inner">
-      <span>APIForge v1.3.0 · Open source (MIT) · Deterministic API verification</span>
+      <span>APIForge v1.4.0 · Open source (MIT) · Deterministic API verification</span>
       <div class="footer-links">
         <a href="https://github.com/INSVikrant54/APIForge" target="_blank" rel="noopener noreferrer">GitHub</a>
-        <a href="https://github.com/INSVikrant54/APIForge/blob/release/v1.3.0/README.md" target="_blank" rel="noopener noreferrer">README</a>
-        <a href="https://github.com/INSVikrant54/APIForge/blob/release/v1.3.0/LICENSE" target="_blank" rel="noopener noreferrer">License</a>
+        <a href="https://github.com/INSVikrant54/APIForge/blob/main/README.md" target="_blank" rel="noopener noreferrer">README</a>
+        <a href="https://github.com/INSVikrant54/APIForge/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">License</a>
       </div>
     </div>
   </footer>

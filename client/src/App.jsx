@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Header from './components/Header.jsx';
 import Sidebar from './components/Sidebar.jsx';
 import ConfigPanel from './components/ConfigPanel.jsx';
+import OpenApiImportPanel from './components/OpenApiImportPanel.jsx';
 import TestSuitePanel from './components/TestSuitePanel.jsx';
 import FailureDetailModal from './components/FailureDetailModal.jsx';
 import RegressionExportModal from './components/RegressionExportModal.jsx';
@@ -10,10 +11,12 @@ import RecentRunsView from './components/RecentRunsView.jsx';
 import DocsView from './components/DocsView.jsx';
 import SettingsView from './components/SettingsView.jsx';
 import { PRESETS } from './utils/presets.js';
+import { applyParameterExamples } from './utils/openApiParams.js';
 import {
   fetchHealth,
   fetchDemoMode,
   setDemoMode,
+  parseOpenApiSpecApi,
   generateTestPlanApi,
   runTestsApi,
   explainFailureApi
@@ -56,6 +59,7 @@ export default function App() {
   // Test Suite & Execution state
   const [testSuite, setTestSuite] = useState(null);
   const [customRequestStarted, setCustomRequestStarted] = useState(false);
+  const [openApiImportOpen, setOpenApiImportOpen] = useState(false);
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem('apiforge_theme');
     return saved === 'light' ? 'light' : 'dark';
@@ -244,6 +248,90 @@ export default function App() {
     }
   };
 
+  const handleOpenApiImport = () => {
+    setPlanError(null);
+    setBanner(null);
+    setResults(null);
+    setSummary(null);
+    setTestSuite(null);
+    setCustomRequestStarted(false);
+    setOpenApiImportOpen(true);
+  };
+
+  const handleChooseOpenApiEndpoint = (endpoint) => {
+    const expectedStatusCodes = Array.isArray(endpoint.expected?.statusCodes)
+      ? endpoint.expected.statusCodes
+      : [];
+    const serverNeedsReview = Boolean(endpoint.serverUrlNeedsReview || !endpoint.serverUrl);
+    const { path: substitutedPath, query, unresolved } = applyParameterExamples(
+      endpoint.path || '',
+      endpoint.parameters || []
+    );
+    const parameterNeedsReview = unresolved.length > 0;
+    let path = `${substitutedPath}${query}`;
+    let serverBaseUrl = '';
+
+    if (!serverNeedsReview && endpoint.serverUrl) {
+      try {
+        const server = new URL(endpoint.serverUrl);
+        if (['http:', 'https:'].includes(server.protocol)) {
+          const basePath = server.pathname.replace(/\/+$/, '');
+          const operationPath = `/${substitutedPath.replace(/^\/+/, '')}`;
+          serverBaseUrl = `${server.origin}${basePath}`;
+          path = `${serverBaseUrl}${operationPath}${query}`;
+        }
+      } catch {
+        // Keep the relative operation path; the user can set a target URL manually.
+      }
+    }
+
+    const parameterNotes = (endpoint.parameters || []).map((parameter) => {
+      const required = parameter.required ? ' (required)' : '';
+      const example = parameter.example !== undefined ? `; example: ${JSON.stringify(parameter.example)}` : '';
+      const description = parameter.description ? ` — ${parameter.description}` : '';
+      return `- ${parameter.in} parameter "${parameter.name}"${required}${description}${example}`;
+    });
+    const rules = [
+      endpoint.apiTitle ? `API: ${endpoint.apiTitle}` : '',
+      endpoint.summary || endpoint.description,
+      ...(parameterNotes.length ? ['Parameters from the API specification:', ...parameterNotes] : []),
+      ...(parameterNeedsReview
+        ? [`Unresolved path parameters: ${unresolved.join(', ')}. Provide concrete values before running.`]
+        : []),
+      endpoint.requestBody?.schema ? `Request body schema: ${JSON.stringify(endpoint.requestBody.schema)}` : ''
+    ].filter(Boolean).join('\n');
+    const body = endpoint.request?.body;
+    const headers = endpoint.request?.headers || {};
+
+    setConfig({
+      method: endpoint.method,
+      path,
+      expectedStatus: expectedStatusCodes[0] ?? '',
+      expectedStatusCodes,
+      expectedStatusReviewRequired: expectedStatusCodes.length === 0,
+      importMetadata: {
+        apiTitle: endpoint.apiTitle,
+        operationId: endpoint.operationId,
+        serverNeedsReview,
+        serverBaseUrl,
+        parameterNeedsReview,
+        unresolvedParameters: unresolved,
+        requiresReview: Boolean(endpoint.requiresReview || serverNeedsReview || parameterNeedsReview)
+      },
+      headers,
+      body: body == null ? '' : JSON.stringify(body, null, 2),
+      sampleResponse: '',
+      businessRules: rules
+    });
+    setTestSuite(null);
+    setResults(null);
+    setSummary(null);
+    setPlanError(null);
+    setOpenApiImportOpen(false);
+    setCustomRequestStarted(true);
+    setCurrentTab('lab');
+  };
+
   // Toggle selection on a single test
   const handleToggleSelect = (testId) => {
     if (!testSuite) return;
@@ -281,7 +369,7 @@ export default function App() {
 
     try {
       const runnerRes = await runTestsApi({
-        targetBaseUrl: config.path.startsWith('http') ? config.path : '',
+        targetBaseUrl: config.importMetadata?.serverBaseUrl || (config.path.startsWith('http') ? config.path : ''),
         tests: testSuite.tests,
         timeoutMs
       });
@@ -301,7 +389,7 @@ export default function App() {
     setRunningTests(true);
     try {
       const runnerRes = await runTestsApi({
-        targetBaseUrl: config.path.startsWith('http') ? config.path : '',
+        targetBaseUrl: config.importMetadata?.serverBaseUrl || (config.path.startsWith('http') ? config.path : ''),
         tests: [{ ...test, selected: true }],
         timeoutMs
       });
@@ -365,6 +453,7 @@ export default function App() {
     setResults(null);
     setSummary(null);
     setCustomRequestStarted(false);
+    setOpenApiImportOpen(false);
     setPlanError(null);
     setBanner(null);
     setInspectingFailure(null);
@@ -399,9 +488,10 @@ export default function App() {
           onLoadDemo={handleLoadDemo}
           loading={loadingPlan || runningTests}
           customRequestActive={customRequestStarted}
+          importActive={openApiImportOpen}
           theme={theme}
           onChangeTheme={setTheme}
-          showBack={!(!testSuite && !customRequestStarted) && currentTab === 'lab'}
+          showBack={currentTab === 'lab' && (Boolean(testSuite) || customRequestStarted || openApiImportOpen)}
           onBack={handleBackToStart}
         />
 
@@ -417,7 +507,9 @@ export default function App() {
         {/* Tab Content */}
         <main className="main-content">
           {currentTab === 'lab' && (
-            (!testSuite && !customRequestStarted) ? (
+            openApiImportOpen ? (
+              <OpenApiImportPanel onChooseEndpoint={handleChooseOpenApiEndpoint} />
+            ) : (!testSuite && !customRequestStarted) ? (
               <div className="start-workspace">
                 <section className="start-copy">
                   <p className="start-kicker">API behavior check</p>
@@ -438,11 +530,19 @@ export default function App() {
                       type="button"
                       className="btn btn-secondary"
                       onClick={() => {
+                        setOpenApiImportOpen(false);
                         setConfig(prev => ({ ...prev, path: '' }));
                         setCustomRequestStarted(true);
                       }}
                     >
                       Test my API
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={handleOpenApiImport}
+                    >
+                      Import OpenAPI
                     </button>
                   </div>
                 </section>

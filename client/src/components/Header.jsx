@@ -10,21 +10,24 @@ export default function Header({
   onLoadDemo,
   loading,
   customRequestActive = false,
+  importActive = false,
   theme = 'dark',
   onChangeTheme,
   showBack = false,
   onBack
 }) {
   const isVulnerable = demoMode?.mode === 'vulnerable';
-  const contextLabel = customRequestActive
-    ? 'Custom API'
-    : isVulnerable
-      ? 'Demo API'
-      : 'Demo API · Safe mode';
+  const contextLabel = importActive
+    ? 'Importing API specification'
+    : customRequestActive
+      ? 'Custom API'
+      : isVulnerable
+        ? 'Demo API'
+        : 'Demo API · Safe mode';
 
   return (
     <header className="top-header">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+      <div className="header-context">
         {showBack && (
           <button type="button" className="btn btn-secondary btn-sm" onClick={onBack}>
             <ArrowLeft size={14} />
@@ -41,7 +44,7 @@ export default function Header({
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      <div className="header-actions">
         <span
           style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.72rem', color: 'var(--text-dim)' }}
           title={health ? `Connected · ${health.model || 'local API'}` : 'No response from the API server'}
@@ -68,7 +71,7 @@ export default function Header({
             {theme === 'dark' ? <Moon size={14} /> : <Sun size={14} />}
           </button>
         )}
-        {!customRequestActive && onToggleDemoMode && (
+        {!customRequestActive && !importActive && onToggleDemoMode && (
           <button
             type="button"
             role="switch"

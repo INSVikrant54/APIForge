@@ -14,7 +14,9 @@ router.post('/', async (req, res) => {
     sampleResponse = null,
     businessRules = '',
     useOfflineDemo = false,
-    model = null
+    model = null,
+    expectedStatusCodes = null,
+    expectedStatusReviewRequired = false
   } = req.body || {};
 
   const customApiKey = req.headers['x-gemini-api-key'] || null;
@@ -41,7 +43,11 @@ router.post('/', async (req, res) => {
       businessRules: typeof businessRules === 'string' ? businessRules.trim() : '',
       useOfflineDemo: Boolean(useOfflineDemo),
       customApiKey,
-      customModel: model
+      customModel: model,
+      // Forwarded as-is; the service normalizes integer HTTP codes 100-599,
+      // drops invalid entries and caps the list at 10.
+      expectedStatusCodes: Array.isArray(expectedStatusCodes) ? expectedStatusCodes : null,
+      expectedStatusReviewRequired: expectedStatusReviewRequired === true
     });
 
     res.json({

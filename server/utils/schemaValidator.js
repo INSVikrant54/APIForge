@@ -14,6 +14,39 @@ const VALID_CATEGORIES = [
   'inconsistent_data'
 ];
 const VALID_SEVERITIES = ['critical', 'high', 'medium', 'low'];
+const MAX_EXPECTED_STATUS_CODES = 10;
+
+/**
+ * Description used when an imported contract declares no explicit success
+ * status code. We never invent a 200/201 in that situation.
+ */
+export const SUCCESS_STATUS_REVIEW_DESCRIPTION =
+  'Success status code needs confirmation: no explicit 2xx response was declared in the imported API contract.';
+
+/**
+ * Normalize a caller-supplied expected status-code list (e.g. imported from an
+ * OpenAPI contract). Only integer HTTP codes within 100-599 are kept,
+ * duplicates are removed and the list is capped at 10 entries. Invalid
+ * entries are dropped rather than throwing so a malformed import can never
+ * break test-plan generation.
+ *
+ * @param {*} input
+ * @returns {number[]}
+ */
+export function normalizeExpectedStatusCodes(input) {
+  if (!Array.isArray(input)) return [];
+  const seen = new Set();
+  const codes = [];
+  for (const candidate of input) {
+    if (typeof candidate !== 'number' || !Number.isInteger(candidate)) continue;
+    if (candidate < 100 || candidate > 599) continue;
+    if (seen.has(candidate)) continue;
+    seen.add(candidate);
+    codes.push(candidate);
+    if (codes.length >= MAX_EXPECTED_STATUS_CODES) break;
+  }
+  return codes;
+}
 
 /**
  * Validates and sanitizes a test plan object
@@ -25,6 +58,20 @@ export function validateAndNormalizeTestPlan(rawPlan, contextConfig = {}) {
   if (!rawPlan || typeof rawPlan !== 'object') {
     throw new Error('Test plan must be a valid JSON object');
   }
+
+  // Optional imported OpenAPI expectation metadata. When provided it is
+  // authoritative for happy_path cases only: negative categories are left to
+  // the model/validator as before. An explicitly empty list is preserved
+  // instead of being replaced with an invented [200, 201].
+  const importedExpectationProvided =
+    Array.isArray(contextConfig.expectedStatusCodes) ||
+    contextConfig.expectedStatusReviewRequired === true;
+  const importedStatusCodes = Array.isArray(contextConfig.expectedStatusCodes)
+    ? normalizeExpectedStatusCodes(contextConfig.expectedStatusCodes)
+    : [];
+  const importedReviewRequired =
+    contextConfig.expectedStatusReviewRequired === true ||
+    (Array.isArray(contextConfig.expectedStatusCodes) && importedStatusCodes.length === 0);
 
   const suiteName = typeof rawPlan.suiteName === 'string' && rawPlan.suiteName.trim()
     ? rawPlan.suiteName.trim()
@@ -89,9 +136,32 @@ export function validateAndNormalizeTestPlan(rawPlan, contextConfig = {}) {
       statusCodes = category === 'happy_path' ? [200, 201] : [400];
     }
 
-    const expectedDesc = exp.description && typeof exp.description === 'string'
+    if (importedExpectationProvided && category === 'happy_path') {
+      if (importedStatusCodes.length > 0) {
+        // The declared contract wins over model output for happy paths.
+        statusCodes = [...importedStatusCodes];
+      } else {
+        // No success code was declared: keep it empty, never invent 200.
+        statusCodes = [];
+      }
+    }
+
+    let expectedDesc = exp.description && typeof exp.description === 'string'
       ? exp.description
       : `Expected HTTP status ${statusCodes.join(' or ')}`;
+
+    if (importedExpectationProvided && category === 'happy_path') {
+      if (statusCodes.length === 0) {
+        const baseDescription = exp.description && typeof exp.description === 'string' && exp.description.trim()
+          ? exp.description
+          : '';
+        expectedDesc = baseDescription
+          ? `${baseDescription} ${SUCCESS_STATUS_REVIEW_DESCRIPTION}`
+          : SUCCESS_STATUS_REVIEW_DESCRIPTION;
+      } else if (importedStatusCodes.length > 0 && !(exp.description && typeof exp.description === 'string' && exp.description.trim())) {
+        expectedDesc = `Expected HTTP status ${statusCodes.join(' or ')} (per imported API contract)`;
+      }
+    }
 
     // Assertions array
     const rawAssertions = Array.isArray(t.assertions) ? t.assertions : (Array.isArray(exp.assertions) ? exp.assertions : []);
@@ -104,11 +174,17 @@ export function validateAndNormalizeTestPlan(rawPlan, contextConfig = {}) {
     }));
 
     // If assertions or expected behavior is uncertain or contract was sparse, flag for review
-    const requiresReview = Boolean(
+    let requiresReview = Boolean(
       t.requiresReview ||
       (category === 'inconsistent_data' && statusCodes.length > 1) ||
       (t.assumptions && t.assumptions.length > 0)
     );
+
+    // An imported contract that needs review (or that declared no success
+    // code at all) must leave its happy paths unconfirmed.
+    if (importedReviewRequired && category === 'happy_path') {
+      requiresReview = true;
+    }
 
     validatedTests.push({
       id,

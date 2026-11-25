@@ -35,3 +35,9 @@ export const verifyKeyLimiter = createLimiter({
   max: 5,
   message: 'Too many API key verification attempts. Please wait a minute before trying again.'
 });
+
+export const openApiImportLimiter = createLimiter({
+  windowMs: 60 * 1000,
+  max: 20,
+  message: 'Too many API specification imports. Please wait a minute before trying again.'
+});
