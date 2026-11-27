@@ -14,7 +14,8 @@ export default function Header({
   theme = 'dark',
   onChangeTheme,
   showBack = false,
-  onBack
+  onBack,
+  targetPath = ''
 }) {
   const isVulnerable = demoMode?.mode === 'vulnerable';
   const contextLabel = importActive
@@ -30,23 +31,21 @@ export default function Header({
       <div className="header-context">
         {showBack && (
           <button type="button" className="btn btn-secondary btn-sm" onClick={onBack}>
-            <ArrowLeft size={14} />
+            <ArrowLeft size={14} aria-hidden="true" />
             <span>Back to start</span>
           </button>
         )}
         <div>
-          <h2 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-main)' }}>
-            Workspace
-          </h2>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '2px' }}>
-            {contextLabel}
+          <h2 className="header-title">Test workspace</h2>
+          <p className="header-subtitle" title={targetPath ? `${contextLabel} · ${targetPath}` : contextLabel}>
+            {targetPath ? `${contextLabel} · ${targetPath}` : contextLabel}
           </p>
         </div>
       </div>
 
       <div className="header-actions">
         <span
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.72rem', color: 'var(--text-dim)' }}
+          className="connection-status"
           title={health ? `Connected · ${health.model || 'local API'}` : 'No response from the API server'}
         >
           <span
@@ -88,9 +87,10 @@ export default function Header({
           onClick={onOpenAiSettings}
           aria-label="Open settings"
           className="btn btn-secondary btn-sm"
+          title="AI key, model and request settings"
         >
-          <Settings size={14} />
-          <span>Settings</span>
+          <Settings size={14} aria-hidden="true" />
+          <span>AI settings</span>
         </button>
       </div>
     </header>

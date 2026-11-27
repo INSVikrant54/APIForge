@@ -35,14 +35,10 @@ export default function TestSuitePanel({
 
   if (!testSuite?.tests?.length) {
     return (
-      <div className="card" style={{ textAlign: 'center', padding: '3.5rem 1.5rem', color: 'var(--text-muted)' }}>
-        <Layers size={40} color="var(--text-dim)" style={{ margin: '0 auto 1rem' }} />
-        <h3 style={{ fontSize: '1.05rem', color: 'var(--text-main)', marginBottom: '0.4rem' }}>
-          No tests generated yet
-        </h3>
-        <p style={{ fontSize: '0.85rem', maxWidth: '420px', margin: '0 auto', color: 'var(--text-muted)' }}>
-          Describe the endpoint on the left, then generate a test plan.
-        </p>
+      <div className="card empty-state">
+        <Layers size={40} aria-hidden="true" />
+        <h3>No tests generated yet</h3>
+        <p>Describe the endpoint on the left, then generate a test plan.</p>
       </div>
     );
   }
@@ -72,29 +68,11 @@ export default function TestSuitePanel({
 
   return (
     <div className="card">
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', marginBottom: '0.9rem' }}>
-        <div style={{ minWidth: 0 }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)' }}>
-            {testSuite.suiteName}
-          </h3>
-          {targetPath && (
-            <p style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: '0.72rem',
-              color: 'var(--text-dim)',
-              marginTop: '0.2rem',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
-            }}>
-              Target: {targetPath}
-            </p>
-          )}
-          {testSuite.summary && (
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-              {testSuite.summary}
-            </p>
-          )}
+      <div className="suite-header">
+        <div className="suite-heading">
+          <h3 className="suite-title">{testSuite.suiteName}</h3>
+          {targetPath && <p className="suite-target">Target: {targetPath}</p>}
+          {testSuite.summary && <p className="suite-summary">{testSuite.summary}</p>}
         </div>
 
         {summary && (
@@ -104,29 +82,19 @@ export default function TestSuitePanel({
             className="btn btn-secondary btn-sm"
             title="Export as Jest or Pytest"
           >
-            <Download size={13} />
+            <Download size={13} aria-hidden="true" />
             <span>Export</span>
           </button>
         )}
       </div>
 
       {summary && (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.65rem',
-          flexWrap: 'wrap',
-          padding: '0.65rem 0',
-          borderTop: '1px solid var(--border-subtle)',
-          borderBottom: '1px solid var(--border-subtle)',
-          marginBottom: '0.75rem',
-          fontSize: '0.78rem'
-        }}>
-          <span style={{ color: 'var(--text-muted)' }}>{summary.total} tests</span>
-          <span style={{ color: 'var(--color-pass)' }}>{summary.passed} passed</span>
-          {summary.failed > 0 && <span style={{ color: 'var(--color-fail)' }}>{summary.failed} failed</span>}
-          {summary.errors > 0 && <span style={{ color: 'var(--color-warn)' }}>{summary.errors} could not run</span>}
-          {summary.needsReview > 0 && <span style={{ color: 'var(--color-warn)' }}>{summary.needsReview} need review</span>}
+        <div className="suite-stats">
+          <span className="suite-stat suite-stat-neutral">{summary.total} tests</span>
+          <span className="suite-stat suite-stat-pass">{summary.passed} passed</span>
+          {summary.failed > 0 && <span className="suite-stat suite-stat-fail">{summary.failed} failed</span>}
+          {summary.errors > 0 && <span className="suite-stat suite-stat-warn">{summary.errors} could not run</span>}
+          {summary.needsReview > 0 && <span className="suite-stat suite-stat-warn">{summary.needsReview} need review</span>}
         </div>
       )}
 
@@ -138,18 +106,18 @@ export default function TestSuitePanel({
             : ''}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.6rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+      <div className="suite-toolbar">
+        <div className="suite-toolbar-group">
           <button type="button" onClick={onSelectAll} disabled={running} className="btn btn-secondary btn-sm" title="Select all tests">
-            <CheckSquare size={13} />
+            <CheckSquare size={13} aria-hidden="true" />
             <span>All</span>
           </button>
           <button type="button" onClick={onDeselectAll} disabled={running} className="btn btn-secondary btn-sm" title="Deselect all tests">
-            <Square size={13} />
+            <Square size={13} aria-hidden="true" />
             <span>None</span>
           </button>
           <button type="button" onClick={() => setShowFilters(value => !value)} className="btn btn-secondary btn-sm" aria-expanded={showFilters}>
-            <Filter size={13} />
+            <Filter size={13} aria-hidden="true" />
             <span>{filterLabel}</span>
           </button>
           <button type="button" onClick={() => setExpandAll(value => !value)} className="btn btn-secondary btn-sm">
@@ -164,13 +132,13 @@ export default function TestSuitePanel({
           aria-busy={running}
           className="btn btn-primary btn-sm"
         >
-          {running ? <Loader2 size={13} className="spin-icon" /> : <Play size={13} />}
+          {running ? <Loader2 size={13} className="spin-icon" aria-hidden="true" /> : <Play size={13} aria-hidden="true" />}
           <span>{running ? `Running ${selectedCount} ${selectedCount === 1 ? 'test' : 'tests'}…` : `Run ${selectedCount} ${selectedCount === 1 ? 'test' : 'tests'}`}</span>
         </button>
       </div>
 
       {showFilters && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', padding: '0.65rem 0', borderTop: '1px solid var(--border-subtle)', marginBottom: '0.65rem' }}>
+        <div className="suite-filters">
           {[
             ['all', 'All results'],
             ['failed', 'Failed'],
@@ -189,11 +157,10 @@ export default function TestSuitePanel({
 
           {categories.length > 1 && (
             <select
-              className="form-select"
               value={filterCategory}
               onChange={event => setFilterCategory(event.target.value)}
               aria-label="Filter tests by category"
-              style={{ width: 'auto', minHeight: '30px', paddingTop: '0.25rem', paddingBottom: '0.25rem', fontSize: '0.75rem' }}
+              className="form-select filter-select"
             >
               <option value="all">All categories</option>
               {categories.map(category => (
@@ -222,7 +189,7 @@ export default function TestSuitePanel({
       </div>
 
       {filteredTests.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+        <div className="empty-state empty-state-compact">
           No tests match this filter.
         </div>
       )}
