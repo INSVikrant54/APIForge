@@ -240,7 +240,7 @@ export default function ConfigPanel({
       {/* HTTP Method & Endpoint */}
       <div className="form-group">
         <label className="form-label">Endpoint</label>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div className="endpoint-row">
           <div
             role="radiogroup"
             aria-label="HTTP Method"
@@ -278,8 +278,7 @@ export default function ConfigPanel({
 
           <input
             type="text"
-            className="form-input"
-            style={{ flex: 1, fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}
+            className="form-input endpoint-input"
             value={config.path}
             onChange={(e) => updateEndpointConfig({ path: e.target.value })}
             onKeyDown={handleFormKeyDown}
@@ -288,22 +287,25 @@ export default function ConfigPanel({
             aria-describedby="endpoint-guard-hint"
           />
 
-          <div style={{ width: '90px' }}>
+          <div className="status-field">
+            <label className="status-label" htmlFor="expected-status">Success</label>
             <input
+              id="expected-status"
               type="number"
-              className="form-input"
-              style={{ width: '100%', textAlign: 'center', fontFamily: 'var(--font-mono)' }}
+              className="form-input status-input"
               value={config.expectedStatus ?? ''}
               onChange={(e) => updateEndpointConfig({ expectedStatus: e.target.value === '' ? '' : Number(e.target.value) })}
               onKeyDown={handleFormKeyDown}
               title="Expected Success Status Code"
               aria-label="Expected Success Status Code"
+              aria-describedby="endpoint-guard-hint"
             />
           </div>
         </div>
-        <p id="endpoint-guard-hint" style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.45, marginTop: '0.35rem' }}>
-          Absolute local and private URLs (localhost, 127.0.0.1, LAN, cloud metadata) are blocked by the SSRF guard.
-          Relative <code style={{ fontFamily: 'var(--font-mono)' }}>/api/demo/...</code> paths run against this app&apos;s sandbox.
+        <p id="endpoint-guard-hint" className="endpoint-hint">
+          Success is the status code that counts as a passing response (usually 200 or 201). Relative{' '}
+          <code>/api/demo/...</code> paths run in this app&apos;s sandbox; absolute local, private and cloud-metadata URLs are
+          blocked by the SSRF guard.
         </p>
         {Array.isArray(config.expectedStatusCodes) && config.expectedStatusCodes.length > 0 && (
           <p className="form-hint" role="status">

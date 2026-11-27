@@ -58,33 +58,9 @@ function TestCaseCard({
   return (
     <div
       aria-busy={isRunning || undefined}
-      style={{
-        background: 'var(--bg-card)',
-        border: '1px solid',
-        borderColor: isError
-          ? 'var(--border-warn)'
-          : isFail
-            ? 'var(--border-fail)'
-            : isPass
-              ? 'var(--border-pass)'
-              : isRunning
-                ? 'var(--accent-border)'
-                : 'var(--border-subtle)',
-        borderRadius: 'var(--radius-sm)',
-        marginBottom: '0.6rem',
-        overflow: 'hidden'
-      }}
+      className={`test-card${isError ? ' test-card-error' : isFail ? ' test-card-fail' : isPass ? ' test-card-pass' : isRunning ? ' test-card-running' : ''}`}
     >
-      <div
-        style={{
-          padding: '0.75rem 1rem',
-          display: 'grid',
-          gridTemplateColumns: '15px 16px minmax(0, 1fr) auto',
-          alignItems: 'center',
-          gap: '0.65rem',
-          background: isError ? 'var(--bg-warn)' : isFail ? 'var(--bg-fail)' : isPass ? 'var(--bg-pass)' : 'transparent'
-        }}
-      >
+      <div className="test-card-head">
         <input
           type="checkbox"
           checked={test.selected !== false}
@@ -94,7 +70,7 @@ function TestCaseCard({
           }}
           disabled={running}
           aria-label={`Select ${test.name}`}
-          style={{ cursor: 'pointer', width: '15px', height: '15px' }}
+          className="test-card-checkbox"
         />
 
         <button
@@ -102,48 +78,29 @@ function TestCaseCard({
           onClick={toggleExpanded}
           aria-expanded={expanded}
           aria-label={`${expanded ? 'Collapse' : 'Expand'} details for ${test.name}`}
-          style={{
-            border: 'none',
-            background: 'transparent',
-            color: 'var(--text-dim)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 0,
-            cursor: 'pointer'
-          }}
+          className="test-expand"
         >
-          {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          {expanded ? <ChevronDown size={16} aria-hidden="true" /> : <ChevronRight size={16} aria-hidden="true" />}
         </button>
 
-        <div style={{ minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, flexWrap: 'wrap' }}>
+        <div className="test-main">
+          <div className="test-title-row">
             <span className={`method-pill method-${(test.request?.method || 'post').toLowerCase()}`}>
               {test.request?.method || 'POST'}
             </span>
-            {test.request?.path && (
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.76rem', color: 'var(--text-muted)' }}>
-                {test.request.path}
-              </span>
-            )}
-            <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-main)' }}>
-              {test.name}
-            </span>
+            {test.request?.path && <span className="test-path">{test.request.path}</span>}
+            <span className="test-name">{test.name}</span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginTop: '0.2rem', minWidth: 0 }}>
-            <span className="category-chip" style={{ flexShrink: 0 }}>
+          <div className="test-meta">
+            <span className="category-chip">
               {CATEGORY_LABELS[test.category] || test.category}
             </span>
-            {test.description && (
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {test.description}
-              </span>
-            )}
+            {test.description && <span className="test-description">{test.description}</span>}
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.35rem' }} onClick={(event) => event.stopPropagation()}>
+        <div className="test-actions" onClick={(event) => event.stopPropagation()}>
           {isRunning && (
             <span className="status-badge status-running">
               <span className="pulse-dot" style={{ background: 'var(--accent-cyan)' }} />
@@ -152,13 +109,13 @@ function TestCaseCard({
           )}
           {!isRunning && isPass && (
             <span className="status-badge status-pass">
-              <CheckCircle2 size={13} /> Pass · {result.durationMs}ms
+              <CheckCircle2 size={13} aria-hidden="true" /> Pass · {result.durationMs}ms
             </span>
           )}
           {!isRunning && isFail && (
             <>
               <span className="status-badge status-fail">
-                <XCircle size={13} /> Fail · {result.durationMs}ms
+                <XCircle size={13} aria-hidden="true" /> Fail · {result.durationMs}ms
               </span>
               <button
                 type="button"
@@ -170,14 +127,14 @@ function TestCaseCard({
                 className="btn btn-sm btn-danger inspect-button"
                 aria-label={`Inspect failure: ${test.name}`}
               >
-                <XCircle size={12} /> Inspect failure <ArrowRight size={12} />
+                <XCircle size={12} aria-hidden="true" /> Inspect failure <ArrowRight size={12} aria-hidden="true" />
               </button>
             </>
           )}
           {!isRunning && isError && (
             <>
               <span className="status-badge status-warn">
-                <AlertTriangle size={13} /> Could not run · {result.durationMs}ms
+                <AlertTriangle size={13} aria-hidden="true" /> Could not run · {result.durationMs}ms
               </span>
               <button
                 type="button"
@@ -186,24 +143,19 @@ function TestCaseCard({
                   event.stopPropagation();
                   onInspectFailure(test, result);
                 }}
-                className="btn btn-sm btn-secondary"
-                style={{ borderColor: 'var(--border-warn)', color: 'var(--color-warn)' }}
+                className="btn btn-sm btn-secondary inspect-error-button"
                 aria-label={`Inspect execution error: ${test.name}`}
               >
-                Inspect error <ArrowRight size={12} />
+                Inspect error <ArrowRight size={12} aria-hidden="true" />
               </button>
             </>
           )}
           {!isRunning && isNeedsReview && (
             <span className="status-badge status-warn">
-              <AlertTriangle size={12} /> Confirm
+              <AlertTriangle size={12} aria-hidden="true" /> Confirm
             </span>
           )}
-          {!isRunning && !result && !isNeedsReview && (
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>
-              Not run
-            </span>
-          )}
+          {!isRunning && !result && !isNeedsReview && <span className="test-not-run">Not run</span>}
           {!isRunning && !isFail && !isError && (
             <button
               type="button"
@@ -212,7 +164,7 @@ function TestCaseCard({
               className="btn btn-secondary btn-sm"
               title="Run this test"
             >
-              <Play size={12} />
+              <Play size={12} aria-hidden="true" />
               <span>Run</span>
             </button>
           )}
@@ -220,70 +172,46 @@ function TestCaseCard({
       </div>
 
       {expanded && (
-        <div style={{
-          padding: '1rem',
-          borderTop: '1px solid var(--border-subtle)',
-          background: 'var(--bg-surface)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '0.75rem',
-          fontSize: '0.8rem'
-        }}>
+        <div className="test-details">
           {test.rationale && (
-            <div style={{ display: 'flex', gap: '0.5rem', color: 'var(--text-muted)' }}>
-              <Info size={15} color="var(--accent-cyan)" style={{ flexShrink: 0, marginTop: '2px' }} />
-              <div><strong style={{ color: 'var(--text-main)' }}>Why this test: </strong>{test.rationale}</div>
+            <div className="test-rationale">
+              <Info size={15} color="var(--accent-text)" aria-hidden="true" />
+              <div><strong>Why this test: </strong>{test.rationale}</div>
             </div>
           )}
 
           {test.requiresReview && (
-            <div style={{
-              background: 'var(--bg-warn)',
-              border: '1px solid var(--border-warn)',
-              padding: '0.65rem 0.8rem',
-              borderRadius: 'var(--radius-sm)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '0.75rem'
-            }}>
-              <span style={{ color: 'var(--color-warn)' }}>Confirm the expected behavior before running this test.</span>
+            <div className="review-note">
+              <span>Confirm the expected behavior before running this test.</span>
               <button
                 type="button"
                 onClick={() => onUpdateTest(test.id, { confirmed: !test.confirmed })}
                 className="btn btn-sm btn-secondary"
-                style={{ borderColor: 'var(--border-warn)', color: 'var(--color-warn)', flexShrink: 0 }}
               >
                 {test.confirmed ? 'Confirmed' : 'Confirm'}
               </button>
             </div>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }} className="test-detail-grid">
+          <div className="test-detail-grid">
             <div>
-              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.3rem' }}>
-                Request
-              </div>
-              <pre className="code-block" style={{ maxHeight: '160px' }}>
+              <div className="test-detail-label">Request</div>
+              <pre className="code-block">
                 {JSON.stringify(test.request?.body, null, 2) || '// No request body'}
               </pre>
             </div>
 
             <div>
-              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.3rem' }}>
-                Expected
-              </div>
-              <div style={{ background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', padding: '0.6rem', maxHeight: '160px', overflowY: 'auto', fontFamily: 'var(--font-mono)', fontSize: '0.72rem' }}>
-                <div style={{ color: 'var(--accent-cyan)', marginBottom: '0.3rem' }}>
+              <div className="test-detail-label">Expected</div>
+              <div className="expected-box">
+                <div className="expected-status">
                   HTTP {test.expected?.statusCodes?.join(', ') || 200}
                 </div>
                 {test.expected?.description && (
-                  <div style={{ color: 'var(--text-muted)', marginBottom: '0.4rem', fontFamily: 'var(--font-sans)' }}>
-                    {test.expected.description}
-                  </div>
+                  <div className="expected-description">{test.expected.description}</div>
                 )}
                 {test.expected?.assertions?.map((assertion, index) => (
-                  <div key={index} style={{ color: 'var(--text-main)', marginTop: '0.2rem' }}>
+                  <div key={index} className="assertion">
                     {assertion.target} {assertion.operator} {JSON.stringify(assertion.value)}
                   </div>
                 ))}
@@ -292,35 +220,28 @@ function TestCaseCard({
           </div>
 
           {result && (
-            <div style={{
-              background: isError ? 'var(--bg-warn)' : isFail ? 'var(--bg-fail)' : 'var(--bg-pass)',
-              border: `1px solid ${isError ? 'var(--border-warn)' : isFail ? 'var(--border-fail)' : 'var(--border-pass)'}`,
-              borderRadius: 'var(--radius-sm)',
-              padding: '0.75rem'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.6rem', marginBottom: '0.4rem' }}>
-                <strong style={{ color: isError ? 'var(--color-warn)' : isFail ? 'var(--color-fail)' : 'var(--color-pass)' }}>
+            <div className={`result-box${isError ? ' result-box-error' : isFail ? ' result-box-fail' : ''}`}>
+              <div className="result-header">
+                <strong className={isError ? 'result-error' : isFail ? 'result-fail' : 'result-pass'}>
                   {isError ? 'No response' : `HTTP ${result.actual?.status}`} · {result.durationMs}ms
                 </strong>
                 <button type="button" onClick={handleCopyCurl} className="btn btn-secondary btn-sm">
-                  {copiedCurl ? <Check size={12} /> : <Copy size={12} />}
+                  {copiedCurl ? <Check size={12} aria-hidden="true" /> : <Copy size={12} aria-hidden="true" />}
                   <span>{copiedCurl ? 'Copied' : 'Copy cURL'}</span>
                 </button>
               </div>
 
               {isError && (
-                <div style={{ color: 'var(--color-warn)', fontSize: '0.8rem', marginBottom: '0.4rem' }}>
+                <div className="result-message result-error">
                   {result.error || 'The request could not be completed. The endpoint may be unreachable, refused the connection, or timed out.'}
                 </div>
               )}
 
               {isFail && result.failureReason && (
-                <div style={{ color: 'var(--color-fail)', fontSize: '0.78rem', marginBottom: '0.4rem' }}>
-                  {result.failureReason}
-                </div>
+                <div className="result-message result-fail">{result.failureReason}</div>
               )}
 
-              <pre tabIndex={0} role="region" aria-label="Actual response body" className="code-block" style={{ maxHeight: '140px' }}>
+              <pre tabIndex={0} role="region" aria-label="Actual response body" className="code-block">
                 {JSON.stringify(result.actual?.body, null, 2)}
               </pre>
             </div>

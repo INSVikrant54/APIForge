@@ -9,6 +9,7 @@ import SecondaryViews from './components/SecondaryViews.jsx';
 import { PRESETS } from './utils/presets.js';
 import { createDefaultEnvironments, environmentSecrets } from './utils/environments.js';
 import { fetchHealth } from './services/api.js';
+import { redactText } from '../../server/utils/environmentResolver.js';
 import { useTheme } from './hooks/useTheme.js';
 import { useAiSettings } from './hooks/useAiSettings.js';
 import { useRunHistory } from './hooks/useRunHistory.js';
@@ -141,6 +142,7 @@ export default function App() {
           onChangeTheme={setTheme}
           showBack={currentTab === 'lab' && (Boolean(testSuite) || customRequestStarted || openApiImportOpen || postmanImportOpen || Boolean(batch))}
           onBack={handleBackToStart}
+          targetPath={redactText(config.path || '', environmentSecrets(config))}
         />
 
         {banner && (
