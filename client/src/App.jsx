@@ -117,6 +117,8 @@ export default function App() {
 
   return (
     <div className="app-container">
+      <a className="skip-link" href="#main-content">Skip to main content</a>
+
       {/* Sidebar Navigation */}
       <Sidebar
         currentTab={currentTab}
@@ -155,7 +157,7 @@ export default function App() {
         )}
 
         {/* Tab Content */}
-        <main className="main-content">
+        <main className="main-content" id="main-content">
           {currentTab === 'lab' && (
             <LabView
               batch={batch}

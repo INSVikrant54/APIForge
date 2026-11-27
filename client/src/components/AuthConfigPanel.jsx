@@ -12,7 +12,7 @@ const AUTH_OPTIONS = [
 
 function VariableSelect({ id, label, variableNames, value, onChange }) {
   return (
-    <div className="form-group" style={{ flex: '1 1 180px', marginBottom: 0 }}>
+    <div className="form-group auth-variable-field">
       <label className="form-label" htmlFor={id}>{label}</label>
       <select
         id={id}

@@ -175,7 +175,7 @@ function TestCaseCard({
         <div className="test-details">
           {test.rationale && (
             <div className="test-rationale">
-              <Info size={15} color="var(--accent-text)" aria-hidden="true" />
+              <Info size={15} aria-hidden="true" />
               <div><strong>Why this test: </strong>{test.rationale}</div>
             </div>
           )}
