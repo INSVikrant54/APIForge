@@ -9,6 +9,7 @@ import SecondaryViews from './components/SecondaryViews.jsx';
 import { PRESETS } from './utils/presets.js';
 import { createDefaultEnvironments, environmentSecrets } from './utils/environments.js';
 import { fetchHealth } from './services/api.js';
+import { redactText } from '../../server/utils/environmentResolver.js';
 import { useTheme } from './hooks/useTheme.js';
 import { useAiSettings } from './hooks/useAiSettings.js';
 import { useRunHistory } from './hooks/useRunHistory.js';
@@ -116,6 +117,8 @@ export default function App() {
 
   return (
     <div className="app-container">
+      <a className="skip-link" href="#main-content">Skip to main content</a>
+
       {/* Sidebar Navigation */}
       <Sidebar
         currentTab={currentTab}
@@ -141,6 +144,7 @@ export default function App() {
           onChangeTheme={setTheme}
           showBack={currentTab === 'lab' && (Boolean(testSuite) || customRequestStarted || openApiImportOpen || postmanImportOpen || Boolean(batch))}
           onBack={handleBackToStart}
+          targetPath={redactText(config.path || '', environmentSecrets(config))}
         />
 
         {banner && (
@@ -153,7 +157,7 @@ export default function App() {
         )}
 
         {/* Tab Content */}
-        <main className="main-content">
+        <main className="main-content" id="main-content">
           {currentTab === 'lab' && (
             <LabView
               batch={batch}

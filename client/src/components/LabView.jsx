@@ -1,3 +1,4 @@
+import { ArrowRight, FileJson, Package, Play } from 'lucide-react';
 import BatchResultsView from './BatchResultsView.jsx';
 import ConfigPanel from './ConfigPanel.jsx';
 import OpenApiImportPanel from './OpenApiImportPanel.jsx';
@@ -34,9 +35,8 @@ export default function LabView({
       <PostmanImportPanel onChooseRequest={handleChoosePostmanRequest} />
     ) : (!testSuite && !customRequestStarted) ? (
       <div className="start-workspace">
-        <section className="start-copy">
-          <p className="start-kicker">API behavior check</p>
-          <h1>Find out how your API really behaves.</h1>
+        <section className="start-copy" aria-labelledby="start-title">
+          <h1 id="start-title">Find out how your API really behaves.</h1>
           <p>
             Generate edge-case tests, run them against your endpoint, and inspect any failure.
           </p>
@@ -47,6 +47,7 @@ export default function LabView({
               onClick={handleLoadDemo}
               disabled={loadingPlan}
             >
+              <Play size={16} aria-hidden="true" />
               {loadingPlan ? 'Preparing demo…' : 'Run the demo'}
             </button>
             <button
@@ -59,26 +60,23 @@ export default function LabView({
                 setCustomRequestStarted(true);
               }}
             >
+              <ArrowRight size={16} aria-hidden="true" />
               Test my API
             </button>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={handleOpenApiImport}
-            >
-              Import OpenAPI
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={handleOpenPostmanImport}
-            >
-              Import Postman
-            </button>
           </div>
+          <p className="start-secondary">
+            Have a spec already?
+            <button type="button" className="start-link" onClick={handleOpenApiImport}>
+              <FileJson size={14} aria-hidden="true" /> Import OpenAPI
+            </button>
+            <span aria-hidden="true">·</span>
+            <button type="button" className="start-link" onClick={handleOpenPostmanImport}>
+              <Package size={14} aria-hidden="true" /> Import Postman
+            </button>
+          </p>
         </section>
 
-        {planError && <div className="start-error">{planError}</div>}
+        {planError && <div className="start-error" role="alert">{planError}</div>}
       </div>
     ) : (
       <>
